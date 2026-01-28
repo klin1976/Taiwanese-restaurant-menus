@@ -1,0 +1,85 @@
+[2025-11-18T01:02:50.538Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[2025-11-18T01:02:50.539Z] > authorizing via signed-in user (klin1007@gmail.com)
+[2025-11-18T01:02:50.539Z] [iam] checking project company-lunch-order for permissions ["firebase.projects.get","firebasehosting.sites.update"]
+[2025-11-18T01:02:50.544Z] Checked if tokens are valid: true, expires at: 1763431205074
+[2025-11-18T01:02:50.544Z] Checked if tokens are valid: true, expires at: 1763431205074
+[2025-11-18T01:02:50.546Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/company-lunch-order:testIamPermissions [none]
+[2025-11-18T01:02:50.546Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/company-lunch-order:testIamPermissions x-goog-quota-user=projects/company-lunch-order
+[2025-11-18T01:02:50.546Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/company-lunch-order:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[2025-11-18T01:02:50.903Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/company-lunch-order:testIamPermissions 200
+[2025-11-18T01:02:50.903Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/company-lunch-order:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[2025-11-18T01:02:50.904Z] Checked if tokens are valid: true, expires at: 1763431205074
+[2025-11-18T01:02:50.904Z] Checked if tokens are valid: true, expires at: 1763431205074
+[2025-11-18T01:02:50.904Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/company-lunch-order [none]
+[2025-11-18T01:02:51.167Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/company-lunch-order 200
+[2025-11-18T01:02:51.168Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/company-lunch-order {"projectId":"company-lunch-order","projectNumber":"83683964210","displayName":"company-lunch-order","name":"projects/company-lunch-order","resources":{"hostingSite":"company-lunch-order"},"state":"ACTIVE","etag":"1_32ac1896-f06a-45a2-a97e-43e13188a709"}
+
+=== Deploying to 'company-lunch-order'...
+
+i  deploying hosting 
+[2025-11-18T01:02:51.179Z] Checked if tokens are valid: true, expires at: 1763431205074
+[2025-11-18T01:02:51.179Z] Checked if tokens are valid: true, expires at: 1763431205074
+[2025-11-18T01:02:51.179Z] >>> [apiv2][query] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/company-lunch-order/versions [none]
+[2025-11-18T01:02:51.179Z] >>> [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/company-lunch-order/versions {"status":"CREATED","labels":{"deployment-tool":"cli-firebase"}}
+[2025-11-18T01:02:52.116Z] <<< [apiv2][status] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/company-lunch-order/versions 200
+[2025-11-18T01:02:52.116Z] <<< [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/company-lunch-order/versions {"name":"projects/83683964210/sites/company-lunch-order/versions/604340bc0925d00c","status":"CREATED","config":{},"labels":{"deployment-tool":"cli-firebase"}}
+i  hosting[company-lunch-order]: beginning deploy... 
+i  hosting[company-lunch-order]: found 8 files in build 
+[2025-11-18T01:02:52.129Z] [hosting] uploading with 200 concurrency
+[2025-11-18T01:02:52.131Z] Checked if tokens are valid: true, expires at: 1763431205074
+[2025-11-18T01:02:52.132Z] Checked if tokens are valid: true, expires at: 1763431205074
+[2025-11-18T01:02:52.133Z] [hosting] hash cache [YnVpbGQ] stored for 8 files
+[2025-11-18T01:02:52.133Z] [hosting][hash queue][FINAL] {"max":1,"min":0,"avg":0,"active":0,"complete":8,"success":8,"errored":0,"retried":0,"total":8,"elapsed":3}
+[2025-11-18T01:02:52.134Z] >>> [apiv2][query] POST https://firebasehosting.googleapis.com/v1beta1/projects/83683964210/sites/company-lunch-order/versions/604340bc0925d00c:populateFiles [none]
+[2025-11-18T01:02:52.134Z] >>> [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/83683964210/sites/company-lunch-order/versions/604340bc0925d00c:populateFiles {"files":{"/robots.txt":"bfe106a3fb878dc83461c86818bf74fc1bdc7f28538ba613cd3e775516ce8b49","/manifest.json":"ee04fb47e525c67d8424ffe9b4d8a8a24e434504478afca4e0ca602146836d4c","/logo512.png":"212b102aa09e51b3b3e06647e81f7801a61333e171f6582e8124379aabccb41d","/logo192.png":"79e2b749561016bc8af300ea19f48347ceed3cb1a54f48ae456172eca45e08f0","/index.html.backup":"b723b1499828d3c00bab46b13a335c86f5d1fec01cf1b238e971739fb96d8f3c","/index.html":"ff30c96bc82e344f2c335693f42460d4d3f05ea2b52aaac2441dacbe5cc85af4","/index-DESKTOP-NF2DFQD.html":"75343c918cf2ceb8739c6a0b3afc868304b99da6e20188423b28455fcfec8f81","/favicon.ico":"27edce7be5922cf0bef7d4136f69b5bfbdd5bf8c13c7b026f71187d41a00aa7d"}}
+[2025-11-18T01:02:52.519Z] <<< [apiv2][status] POST https://firebasehosting.googleapis.com/v1beta1/projects/83683964210/sites/company-lunch-order/versions/604340bc0925d00c:populateFiles 200
+[2025-11-18T01:02:52.519Z] <<< [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/83683964210/sites/company-lunch-order/versions/604340bc0925d00c:populateFiles {"uploadUrl":"https://upload-firebasehosting.googleapis.com/upload/sites/company-lunch-order/versions/604340bc0925d00c/files"}
+[2025-11-18T01:02:52.520Z] [hosting][populate queue][FINAL] {"max":389,"min":389,"avg":389,"active":0,"complete":1,"success":1,"errored":0,"retried":0,"total":1,"elapsed":389}
+[2025-11-18T01:02:52.520Z] [hosting] uploads queued: 0
+[2025-11-18T01:02:52.520Z] [hosting][upload queue][FINAL] {"max":0,"min":9999999999,"avg":0,"active":0,"complete":0,"success":0,"errored":0,"retried":0,"total":0,"elapsed":1763427772520}
+i  hosting: upload complete 
++  hosting[company-lunch-order]: file upload complete 
+[2025-11-18T01:02:52.520Z] [hosting] deploy completed after 401ms
+[2025-11-18T01:02:52.521Z] [
+  {
+    "config": {
+      "public": "build",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ],
+      "rewrites": [
+        {
+          "source": "**",
+          "destination": "/index.html"
+        }
+      ],
+      "site": "company-lunch-order"
+    },
+    "version": "projects/83683964210/sites/company-lunch-order/versions/604340bc0925d00c"
+  }
+]
+i  hosting[company-lunch-order]: finalizing version... 
+[2025-11-18T01:02:52.522Z] Checked if tokens are valid: true, expires at: 1763431205074
+[2025-11-18T01:02:52.522Z] Checked if tokens are valid: true, expires at: 1763431205074
+[2025-11-18T01:02:52.523Z] >>> [apiv2][query] PATCH https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/company-lunch-order/versions/604340bc0925d00c updateMask=status%2Cconfig
+[2025-11-18T01:02:52.523Z] >>> [apiv2][body] PATCH https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/company-lunch-order/versions/604340bc0925d00c {"status":"FINALIZED","config":{"rewrites":[{"glob":"**","path":"/index.html"}]}}
+[2025-11-18T01:02:52.941Z] <<< [apiv2][status] PATCH https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/company-lunch-order/versions/604340bc0925d00c 200
+[2025-11-18T01:02:52.941Z] <<< [apiv2][body] PATCH https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/company-lunch-order/versions/604340bc0925d00c {"name":"projects/83683964210/sites/company-lunch-order/versions/604340bc0925d00c","status":"FINALIZED","config":{"rewrites":[{"glob":"**","path":"/index.html"}]},"labels":{"deployment-tool":"cli-firebase"},"createTime":"2025-11-18T01:02:51.540722Z","createUser":{"email":"klin1007@gmail.com"},"finalizeTime":"2025-11-18T01:02:52.737109Z","finalizeUser":{"email":"klin1007@gmail.com"}}
+[2025-11-18T01:02:52.942Z] [hosting] finalized version for company-lunch-order:[object Object]
++  hosting[company-lunch-order]: version finalized 
+i  hosting[company-lunch-order]: releasing new version... 
+[2025-11-18T01:02:52.942Z] Checked if tokens are valid: true, expires at: 1763431205074
+[2025-11-18T01:02:52.942Z] Checked if tokens are valid: true, expires at: 1763431205074
+[2025-11-18T01:02:52.942Z] >>> [apiv2][query] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/company-lunch-order/channels/live/releases versionName=projects%2F83683964210%2Fsites%2Fcompany-lunch-order%2Fversions%2F604340bc0925d00c
+[2025-11-18T01:02:52.942Z] >>> [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/company-lunch-order/channels/live/releases {}
+[2025-11-18T01:02:53.337Z] <<< [apiv2][status] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/company-lunch-order/channels/live/releases 200
+[2025-11-18T01:02:53.337Z] <<< [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/company-lunch-order/channels/live/releases {"name":"projects/83683964210/sites/company-lunch-order/channels/live/releases/1763427772556000","version":{"name":"projects/83683964210/sites/company-lunch-order/versions/604340bc0925d00c","status":"FINALIZED","config":{"rewrites":[{"glob":"**","path":"/index.html"}]},"labels":{"deployment-tool":"cli-firebase"},"createTime":"2025-11-18T01:02:51.540722Z","createUser":{"email":"klin1007@gmail.com","imageUrl":"https://lh3.googleusercontent.com/a/ACg8ocIKg3ACdO7h197oc7iuvlYi-az_Y0hI_nNhagoz8nvf8_jXik5NJA"},"finalizeTime":"2025-11-18T01:02:52.737109Z","finalizeUser":{"email":"klin1007@gmail.com","imageUrl":"https://lh3.googleusercontent.com/a/ACg8ocIKg3ACdO7h197oc7iuvlYi-az_Y0hI_nNhagoz8nvf8_jXik5NJA"}},"type":"DEPLOY","releaseTime":"2025-11-18T01:02:52.556Z","releaseUser":{"email":"klin1007@gmail.com","imageUrl":"https://lh3.googleusercontent.com/a/ACg8ocIKg3ACdO7h197oc7iuvlYi-az_Y0hI_nNhagoz8nvf8_jXik5NJA"}}
+[2025-11-18T01:02:53.338Z] [hosting] release: {"name":"projects/83683964210/sites/company-lunch-order/channels/live/releases/1763427772556000","version":{"name":"projects/83683964210/sites/company-lunch-order/versions/604340bc0925d00c","status":"FINALIZED","config":{"rewrites":[{"glob":"**","path":"/index.html"}]},"labels":{"deployment-tool":"cli-firebase"},"createTime":"2025-11-18T01:02:51.540722Z","createUser":{"email":"klin1007@gmail.com","imageUrl":"https://lh3.googleusercontent.com/a/ACg8ocIKg3ACdO7h197oc7iuvlYi-az_Y0hI_nNhagoz8nvf8_jXik5NJA"},"finalizeTime":"2025-11-18T01:02:52.737109Z","finalizeUser":{"email":"klin1007@gmail.com","imageUrl":"https://lh3.googleusercontent.com/a/ACg8ocIKg3ACdO7h197oc7iuvlYi-az_Y0hI_nNhagoz8nvf8_jXik5NJA"}},"type":"DEPLOY","releaseTime":"2025-11-18T01:02:52.556Z","releaseUser":{"email":"klin1007@gmail.com","imageUrl":"https://lh3.googleusercontent.com/a/ACg8ocIKg3ACdO7h197oc7iuvlYi-az_Y0hI_nNhagoz8nvf8_jXik5NJA"}}
++  hosting[company-lunch-order]: release complete 
+
++  Deploy complete! 
+
+Project Console: https://console.firebase.google.com/project/company-lunch-order/overview
+Hosting URL: https://company-lunch-order.web.app
