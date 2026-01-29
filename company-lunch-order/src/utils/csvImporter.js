@@ -3,6 +3,7 @@ import Papa from 'papaparse';
 import { doc, updateDoc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { initializeProductTags } from './productTags';
+import { getDrinkStandardOptions } from './dataMigration';
 
 /**
  * CSV 匯入工具
@@ -19,7 +20,9 @@ const FIELD_MAPPING = {
   '價格': 'price',
   '描述': 'description',
   '狀態': 'status', // available, unavailable
-  '標籤': 'tags'    // 使用 / 分隔，例如 "熱門/推薦"
+  '標籤': 'tags',   // 使用 / 分隔，例如 "熱門/推薦"
+  '商品類型': 'productType', // 餐點, 飲料
+  '選項範本': 'optionTemplate' // 飲料標準
 };
 
 /**
@@ -94,7 +97,7 @@ export const processImportData = (rawData, currentStore) => {
     Object.entries(FIELD_MAPPING).forEach(([csvHeader, sysField]) => {
       // 處理 BOM (Byte Order Mark) 可能導致的第一個欄位名稱問題
       const actualHeader = Object.keys(row).find(key => key.trim() === csvHeader);
-      
+
       if (REQUIRED_FIELDS.includes(csvHeader)) {
         if (!actualHeader || !row[actualHeader] || row[actualHeader].toString().trim() === '') {
           isValid = false;
@@ -141,16 +144,23 @@ export const processImportData = (rawData, currentStore) => {
         // 簡單對應：如果有自訂標籤名稱，嘗試啟動對應的 tag
         // 注意：這裡簡化處理，僅將 CSV 提到的標籤視為 true，實際應用可能需要更複雜的對應
         Object.keys(tags).forEach(tagKey => {
-           // 這裡假設 tagKey 對應顯示名稱，或者 CSV 輸入的是 key
-           // 實務上可能需要一個 Tag Name -> Key 的反向查找表
-           // 暫時僅支援幾個通用標籤
-           if (tagNames.includes('熱門') && tags.isPopular !== undefined) tags.isPopular = true;
-           if (tagNames.includes('推薦') && tags.isRecommended !== undefined) tags.isRecommended = true;
-           if (tagNames.includes('素食') && tags.isVegetarian !== undefined) tags.isVegetarian = true;
-           if (tagNames.includes('辣') && tags.isSpicy !== undefined) tags.isSpicy = true;
+          // 這裡假設 tagKey 對應顯示名稱，或者 CSV 輸入的是 key
+          // 實務上可能需要一個 Tag Name -> Key 的反向查找表
+          // 暫時僅支援幾個通用標籤
+          if (tagNames.includes('熱門') && tags.isPopular !== undefined) tags.isPopular = true;
+          if (tagNames.includes('推薦') && tags.isRecommended !== undefined) tags.isRecommended = true;
+          if (tagNames.includes('素食') && tags.isVegetarian !== undefined) tags.isVegetarian = true;
+          if (tagNames.includes('辣') && tags.isSpicy !== undefined) tags.isSpicy = true;
         });
       }
       itemData.tags = tags;
+
+      // 範本處理 (Smart Template)
+      // 如果類型是「飲料」或範本指定「飲料標準」，自動套用範本
+      if (itemData.productType === '飲料' || itemData.optionTemplate === '飲料標準') {
+        itemData.hasOptions = true;
+        itemData.optionGroups = getDrinkStandardOptions();
+      }
 
       // 判斷是新增還是更新
       const existingItem = itemMap.get(`${itemData.categoryName}:${itemData.name}`);
@@ -202,7 +212,7 @@ export const executeImport = async (storeId, storeType, processedItems, currentS
   processedItems.forEach(item => {
     // 1. 處理分類
     let category = newCategories.find(c => c.name === item.categoryName);
-    
+
     if (!category) {
       category = {
         id: `cat_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
@@ -217,7 +227,7 @@ export const executeImport = async (storeId, storeType, processedItems, currentS
 
     // 2. 處理商品
     const itemIndex = category.items.findIndex(i => i.name === item.name);
-    
+
     const newItemData = {
       id: item.id,
       name: item.name,
@@ -229,8 +239,9 @@ export const executeImport = async (storeId, storeType, processedItems, currentS
       images: itemIndex > -1 ? category.items[itemIndex].images : { main: '', gallery: [] },
       hasVariants: itemIndex > -1 ? category.items[itemIndex].hasVariants : false,
       variants: itemIndex > -1 ? category.items[itemIndex].variants : [],
-      hasOptions: itemIndex > -1 ? category.items[itemIndex].hasOptions : false,
-      optionGroups: itemIndex > -1 ? category.items[itemIndex].optionGroups : [],
+      // 優先使用匯入資料中的選項設定，否則使用現有資料，最後才預設為 false/[]
+      hasOptions: item.hasOptions !== undefined ? item.hasOptions : (itemIndex > -1 ? category.items[itemIndex].hasOptions : false),
+      optionGroups: item.optionGroups !== undefined ? item.optionGroups : (itemIndex > -1 ? category.items[itemIndex].optionGroups : []),
       sortOrder: itemIndex > -1 ? category.items[itemIndex].sortOrder : 999
     };
 
@@ -252,6 +263,6 @@ export const executeImport = async (storeId, storeType, processedItems, currentS
     categories: newCategories,
     updatedAt: new Date()
   });
-  
+
   return newCategories;
 };

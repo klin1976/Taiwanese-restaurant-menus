@@ -75,7 +75,7 @@ const OrderHistory = ({ onBack, onOrderSelect }) => {
               </button>
               <h1 className="text-2xl font-bold text-gray-900">我的訂單</h1>
             </div>
-            
+
             <button
               onClick={fetchOrders}
               className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center"
@@ -91,31 +91,28 @@ const OrderHistory = ({ onBack, onOrderSelect }) => {
           <div className="flex space-x-2 mt-4">
             <button
               onClick={() => setFilter('all')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                filter === 'all'
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${filter === 'all'
                   ? 'bg-indigo-600 text-white'
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
+                }`}
             >
               全部訂單
             </button>
             <button
               onClick={() => setFilter('pending')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                filter === 'pending'
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${filter === 'pending'
                   ? 'bg-indigo-600 text-white'
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
+                }`}
             >
               進行中
             </button>
             <button
               onClick={() => setFilter('completed')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                filter === 'completed'
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${filter === 'completed'
                   ? 'bg-indigo-600 text-white'
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
+                }`}
             >
               已完成
             </button>
@@ -173,7 +170,7 @@ const OrderHistory = ({ onBack, onOrderSelect }) => {
                             <span className="font-medium text-gray-900">{item.name}</span>
                             <span className="ml-3 text-gray-600">x {item.quantity}</span>
                           </div>
-                          
+
                           {/* 顯示客製化資訊 */}
                           {item.customization && (
                             <div className="mt-2 bg-indigo-50 p-3 rounded-lg border border-indigo-100">
@@ -193,7 +190,7 @@ const OrderHistory = ({ onBack, onOrderSelect }) => {
                                   </span>
                                 </div>
                               </div>
-                              
+
                               {item.customization.toppings && item.customization.toppings.length > 0 && (
                                 <div className="mt-2 flex items-start text-sm text-gray-700">
                                   <span className="mr-1">➕</span>
@@ -201,7 +198,7 @@ const OrderHistory = ({ onBack, onOrderSelect }) => {
                                     <span className="font-medium">加料:</span>
                                     <div className="flex flex-wrap gap-2 mt-1">
                                       {item.customization.toppings.map((topping, tIndex) => (
-                                        <span 
+                                        <span
                                           key={tIndex}
                                           className="inline-block bg-white px-2 py-1 rounded border border-indigo-200 text-indigo-700 font-medium"
                                         >
@@ -215,7 +212,7 @@ const OrderHistory = ({ onBack, onOrderSelect }) => {
                             </div>
                           )}
                         </div>
-                        
+
                         <div className="ml-4 text-right">
                           <p className="font-bold text-indigo-600">NT$ {item.price}</p>
                         </div>
@@ -228,7 +225,9 @@ const OrderHistory = ({ onBack, onOrderSelect }) => {
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
                         <span className="text-gray-600">訂單編號:</span>
-                        <p className="font-mono text-gray-900 mt-1">{order.id}</p>
+                        <p className="font-mono text-gray-900 mt-1">
+                          {order.orderNumber || order.id}
+                        </p>
                       </div>
                       <div>
                         <span className="text-gray-600">訂購人:</span>

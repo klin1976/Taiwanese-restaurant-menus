@@ -8,7 +8,7 @@ const OrderStatusManager = ({ order, onStatusUpdate, onClose }) => {
 
   const handleStatusUpdate = async (newStatus) => {
     if (newStatus === order.status) return;
-    
+
     setIsUpdating(true);
     try {
       await updateOrderStatus(order.id, newStatus, notes);
@@ -40,12 +40,12 @@ const OrderStatusManager = ({ order, onStatusUpdate, onClose }) => {
     const statusOrder = ['pending', 'confirmed', 'preparing', 'ready', 'completed'];
     const currentIndex = statusOrder.indexOf(order.status);
     const targetIndex = statusOrder.indexOf(status);
-    
+
     // 允許取消（除非已完成）
     if (status === 'cancelled') {
       return order.status !== 'completed';
     }
-    
+
     // 不能往回退狀態（除了取消）
     return targetIndex >= currentIndex;
   };
@@ -53,7 +53,7 @@ const OrderStatusManager = ({ order, onStatusUpdate, onClose }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg max-w-md w-full max-h-screen overflow-y-auto">
-        
+
         {/* 標頭 */}
         <div className="flex items-center justify-between p-6 border-b">
           <h3 className="text-lg font-semibold text-gray-900">
@@ -71,7 +71,7 @@ const OrderStatusManager = ({ order, onStatusUpdate, onClose }) => {
         {/* 訂單資訊 */}
         <div className="p-6 border-b bg-gray-50">
           <div className="text-sm text-gray-600 mb-1">
-            訂單編號: #{order.id.slice(-8)}
+            訂單編號: {order.orderNumber || '#' + order.id.slice(-8)}
           </div>
           <div className="font-medium text-gray-900 mb-1">
             {order.storeName}
@@ -93,7 +93,7 @@ const OrderStatusManager = ({ order, onStatusUpdate, onClose }) => {
             {Object.entries(ORDER_STATUS).map(([key, status]) => {
               const isAvailable = isStatusAvailable(status);
               const isCurrent = status === order.status;
-              
+
               return (
                 <button
                   key={status}

@@ -216,10 +216,10 @@ const MobileOptimizedMenu = ({ store, onBack, onOrderComplete }) => {
 
       console.log('準備送出的訂單資料:', orderData);
 
-      const orderId = await createOrder(orderData);
+      const { id: orderId, orderNumber } = await createOrder(orderData);
 
-      console.log('訂單建立成功，ID:', orderId);
-      alert('訂單送出成功！');
+      console.log('訂單建立成功，ID:', orderId, 'No:', orderNumber);
+      alert(`訂單送出成功！ (單號: ${orderNumber})`);
 
       setCart({});
       setShowCart(false);

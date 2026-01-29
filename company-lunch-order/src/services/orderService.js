@@ -13,6 +13,7 @@ import {
   runTransaction
 } from 'firebase/firestore';
 import { db } from '../firebase';
+import { notifyStoreNewOrder, notifyStoreOrderCancelled } from './notificationService';
 
 export const ORDER_STATUS = {
   PENDING: '待確認',
@@ -117,7 +118,7 @@ export const createOrder = async (orderData) => {
     console.log('即將寫入 Firestore 的訂單資料:', JSON.stringify(newOrder, null, 2));
 
     // 使用 Transaction 確保庫存扣減原子性
-    const orderId = await runTransaction(db, async (transaction) => {
+    const result = await runTransaction(db, async (transaction) => {
       // 1. 讀取店家資料以檢查並扣減庫存
       // 必須從 orderData 傳入 storeType，否則無法定位店家文件
       const storeType = orderData.storeType || 'lunch'; // 暫時預設 lunch，或是必須強制傳入
@@ -180,15 +181,44 @@ export const createOrder = async (orderData) => {
         });
       }
 
-      // 3.2 寫入新訂單
+      // 3. 處理每日訂單序號 (Format: YYYYMMDD-XXXX)
+      const todayStr = new Date().toISOString().slice(0, 10).replace(/-/g, ''); // YYYYMMDD
+      const counterRef = doc(db, 'counters', 'dailyOrderCounter');
+      const counterDoc = await transaction.get(counterRef);
+
+      let currentSeq = 1;
+      if (counterDoc.exists()) {
+        const data = counterDoc.data();
+        if (data.date === todayStr) {
+          currentSeq = data.count + 1;
+        }
+      }
+
+      transaction.set(counterRef, {
+        date: todayStr,
+        count: currentSeq
+      });
+
+      const orderNumber = `${todayStr}-${String(currentSeq).padStart(4, '0')}`;
+      newOrder.orderNumber = orderNumber; // 新增易讀編號欄位
+
+      // 4. 寫入新訂單
       const newOrderRef = doc(collection(db, 'orders'));
       transaction.set(newOrderRef, newOrder);
 
-      return newOrderRef.id;
+      return { id: newOrderRef.id, orderNumber };
     });
 
-    console.log('訂單建立成功 (Transaction):', orderId);
-    return orderId;
+    console.log(`訂單建立成功 (Transaction): ID=${result.id}, No=${result.orderNumber}`);
+
+    // 🔔 發送 Google Chat 通知給店家
+    notifyStoreNewOrder({
+      ...orderData,
+      orderNumber: result.orderNumber,
+      id: result.id
+    });
+
+    return result;
 
   } catch (error) {
     console.error('建立訂單失敗:', error);
@@ -236,6 +266,15 @@ export const updateOrderStatus = async (orderId, newStatus) => {
     });
 
     console.log('訂單狀態已更新:', orderId, newStatus);
+
+    // 🔥 預留：推播通知觸發點
+    if (newStatus === ORDER_STATUS.CONFIRMED) {
+      console.log(`[FCM-MOCK] 🔔 通知使用者: 訂單 ${orderId} 因已被店家「確認接單」`);
+    } else if (newStatus === ORDER_STATUS.READY) {
+      console.log(`[FCM-MOCK] 🔔 通知使用者: 訂單 ${orderId} 狀態變更為「可取餐」- 快來拿！`);
+    } else if (newStatus === ORDER_STATUS.CANCELLED) {
+      console.log(`[FCM-MOCK] 🔔 通知使用者: 訂單 ${orderId} 已被「取消」`);
+    }
   } catch (error) {
     console.error('更新訂單狀態失敗:', error);
     throw error;
@@ -246,6 +285,8 @@ export const cancelOrder = async (orderId) => {
   try {
     await updateOrderStatus(orderId, ORDER_STATUS.CANCELLED);
     console.log('訂單已取消:', orderId);
+    // 🔔 發送 Google Chat 通知給店家
+    notifyStoreOrderCancelled({ id: orderId, orderNumber: orderId, userName: '使用者' });
   } catch (error) {
     console.error('取消訂單失敗:', error);
     throw error;

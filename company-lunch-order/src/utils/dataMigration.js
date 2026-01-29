@@ -18,11 +18,11 @@ const isOldFormat = (item) => {
   // 1. 有 price 但沒有 basePrice
   // 2. 有 imageUrl 但沒有 images 物件
   // 3. 沒有 hasVariants 和 hasOptions 欄位
-  
+
   const hasOldPrice = item.price !== undefined && item.basePrice === undefined;
   const hasOldImage = item.imageUrl !== undefined && !item.images;
   const missingNewFields = !item.hasOwnProperty('hasVariants') && !item.hasOwnProperty('hasOptions');
-  
+
   return hasOldPrice || hasOldImage || missingNewFields;
 };
 
@@ -48,23 +48,23 @@ export const migrateItem = (item, storeType = 'lunch', options = {}) => {
     description: item.description || '',
     status: item.status || 'available',
     sortOrder: item.sortOrder || 999,
-    
+
     // ===== 標籤（保留或初始化） =====
     tags: item.tags || initializeProductTags(),
-    
+
     // ===== 價格轉換 =====
     basePrice: item.basePrice || item.price || 0,
-    
+
     // ===== 圖片轉換 =====
     images: {
       main: item.imageUrl || '',
       gallery: []
     },
-    
+
     // ===== 新增變體系統（預設關閉） =====
     hasVariants: false,
     variants: [],
-    
+
     // ===== 新增選項系統 =====
     hasOptions: false,
     optionGroups: []
@@ -93,7 +93,7 @@ export const migrateItem = (item, storeType = 'lunch', options = {}) => {
  * 取得飲料店標準選項組（範本）
  * @returns {Array} 選項組陣列
  */
-const getDrinkStandardOptions = () => {
+export const getDrinkStandardOptions = () => {
   return [
     {
       id: 'group_sweetness',
@@ -171,7 +171,7 @@ export const scanItemsForMigration = async (storeId, storeType) => {
       if (category.items && category.items.length > 0) {
         category.items.forEach(item => {
           totalItems++;
-          
+
           if (isOldFormat(item)) {
             oldFormatItems++;
             itemsToMigrate.push({

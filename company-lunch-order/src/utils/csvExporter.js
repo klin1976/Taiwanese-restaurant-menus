@@ -60,7 +60,7 @@ export const convertOrdersToCSV = (orders, options = {}) => {
  */
 const createCSVRow = (order, item, includeCustomization, includeUserInfo) => {
   const row = {
-    '訂單編號': order.id || '',
+    '訂單編號': order.orderNumber || order.id || '',
     '訂購日期': order.createdAt ? formatDateTime(order.createdAt).split(' ')[0] : '',
     '訂購時間': order.createdAt ? formatDateTime(order.createdAt).split(' ')[1] : '',
   };
@@ -85,7 +85,7 @@ const createCSVRow = (order, item, includeCustomization, includeUserInfo) => {
     if (includeCustomization && item.customization) {
       row['甜度'] = item.customization.sweetness || '';
       row['冰塊'] = item.customization.ice || '';
-      
+
       // 加料
       if (item.customization.toppings && item.customization.toppings.length > 0) {
         const toppingNames = item.customization.toppings.map(t => t.name).join('、');
@@ -178,14 +178,14 @@ export const downloadCSV = (csvContent, filename) => {
 export const generateFileName = (prefix = '訂單統計報表', startDate = null, endDate = null) => {
   const now = new Date();
   const timestamp = now.toISOString().slice(0, 19).replace(/[-:T]/g, '').slice(0, 14);
-  
+
   let filename = prefix;
 
   // 如果有日期範圍，加入日期資訊
   if (startDate && endDate) {
     const startStr = startDate.toISOString().slice(0, 10).replace(/-/g, '');
     const endStr = endDate.toISOString().slice(0, 10).replace(/-/g, '');
-    
+
     if (startStr === endStr) {
       filename += `_${startStr}`;
     } else {
