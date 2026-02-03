@@ -2,7 +2,8 @@
 import { initializeApp, getApps } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
-import { getStorage } from 'firebase/storage'; // ✅ 新增
+import { getStorage } from 'firebase/storage';
+import { getFunctions } from 'firebase/functions'; // ✅ 新增
 import { devLog, devError, forceError } from './utils/devLog';
 
 // Firebase 配置
@@ -41,7 +42,8 @@ if (!getApps().length) {
 // 初始化服務
 export const auth = getAuth(app);
 export const db = getFirestore(app);
-export const storage = getStorage(app); // ✅ 新增
+export const storage = getStorage(app);
+export const functions = getFunctions(app, 'asia-east1'); // ✅ 新增 (指定區域)
 
 // 配置 Google Provider
 export const googleProvider = new GoogleAuthProvider();

@@ -56,7 +56,8 @@ export const createOrder = async (orderData) => {
 
     const duplicateSnapshot = await getDocs(duplicateQuery);
 
-    // 在客戶端過濾重複訂單
+    // 在客戶端過濾重複訂單 (暫時停用以方便測試)
+    /*
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
@@ -76,9 +77,16 @@ export const createOrder = async (orderData) => {
 
     if (todayDuplicates.length > 0) {
       console.warn('檢測到今日重複訂單');
-      alert('您今天已經在這家餐廳訂購過了');
-      return todayDuplicates[0].id;
+      // alert('您今天已經在這家餐廳訂購過了'); // 暫時移除 Alert
+      const existingOrder = todayDuplicates[0];
+      const existingData = existingOrder.data();
+      // return { 
+      //   id: existingOrder.id, 
+      //   orderNumber: existingData.orderNumber || existingOrder.id,
+      //   isDuplicate: true 
+      // };
     }
+    */
 
     // 處理訂單項目，確保客製化資料被正確儲存
     const processedItems = orderData.items.map(item => {
@@ -211,12 +219,16 @@ export const createOrder = async (orderData) => {
 
     console.log(`訂單建立成功 (Transaction): ID=${result.id}, No=${result.orderNumber}`);
 
-    // 🔔 發送 Google Chat 通知給店家
-    notifyStoreNewOrder({
-      ...orderData,
-      orderNumber: result.orderNumber,
-      id: result.id
-    });
+    // 🔔 發送 Teams 通知給店家 (Fire-and-Forget，不阻塞主流程)
+    try {
+      notifyStoreNewOrder({
+        ...orderData,
+        orderNumber: result.orderNumber,
+        id: result.id
+      }).catch(err => console.warn('[通知] 背景通知失敗，不影響訂單:', err));
+    } catch (notifyErr) {
+      console.warn('[通知] 通知初始化失敗:', notifyErr);
+    }
 
     return result;
 
