@@ -35,7 +35,8 @@ const StoreEditor = ({ isOpen, onClose, store, onSave, isEdit = false }) => {
     minOrder: 0,
     sortOrder: 999,
     active: true,
-    hours: defaultHours
+    hours: defaultHours,
+    cutoffTime: ''
   });
 
   const [districts, setDistricts] = useState([]);
@@ -93,7 +94,8 @@ const StoreEditor = ({ isOpen, onClose, store, onSave, isEdit = false }) => {
         minOrder: store.minOrder || 0,
         sortOrder: store.sortOrder || 999,
         active: store.active !== undefined ? store.active : true,
-        hours: storeHours
+        hours: storeHours,
+        cutoffTime: store.cutoffTime || ''
       });
 
       // 載入區域選項
@@ -636,6 +638,19 @@ const StoreEditor = ({ isOpen, onClose, store, onSave, isEdit = false }) => {
                     />
                     <span className="text-sm font-medium text-gray-700">啟用店家</span>
                   </label>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    訂餐截止時間 (選填)
+                  </label>
+                  <input
+                    type="time"
+                    value={formData.cutoffTime}
+                    onChange={(e) => setFormData({ ...formData, cutoffTime: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">留白表示無截止時間，例如設定 10:30 (時間到將自動顯示休息中)</p>
                 </div>
               </div>
             </div>

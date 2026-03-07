@@ -153,6 +153,7 @@ export const createStore = async (storeData, currentUser) => {
       minOrder: storeData.minOrder || 0,
       sortOrder: storeData.sortOrder || 999,
       active: storeData.active !== undefined ? storeData.active : true,
+      cutoffTime: storeData.cutoffTime || '',
       deleted: false,
 
       // 菜單（初始為空）

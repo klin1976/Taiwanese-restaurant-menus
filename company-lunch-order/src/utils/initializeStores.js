@@ -2,22 +2,64 @@
 import { collection, doc, setDoc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 
-// 營業時間檢查函數
-export const isStoreOpen = (hours) => {
-  if (!hours) return true;
-  
+// 營業時間與截止時間檢查函數
+export const isStoreOpen = (store) => {
+  if (!store) return false;
+
   const now = new Date();
   const currentHour = now.getHours();
   const currentMinute = now.getMinutes();
   const currentTime = currentHour * 60 + currentMinute;
-  
-  const [openHour, openMinute] = hours.open.split(':').map(Number);
-  const [closeHour, closeMinute] = hours.close.split(':').map(Number);
-  
-  const openTime = openHour * 60 + openMinute;
-  const closeTime = closeHour * 60 + closeMinute;
-  
-  return currentTime >= openTime && currentTime <= closeTime;
+
+  // 1. 檢查訂餐截止時間
+  if (store.cutoffTime) {
+    const [cutoffHour, cutoffMin] = store.cutoffTime.split(':').map(Number);
+    const cutoffTimeValue = cutoffHour * 60 + cutoffMin;
+    if (currentTime > cutoffTimeValue) {
+      return false; // 已超過截單時間
+    }
+  }
+
+  // 2. 檢查營業時間
+  const hours = store.hours;
+  if (!hours) return true;
+
+  // 處理新版營業時間結構 (regular, special)
+  if (hours.regular) {
+    // 檢查是否有特殊時間 (優先)
+    if (hours.special && hours.special.length > 0) {
+      // 如果需要更複雜的特殊假期處理，這裡可以擴展
+      // 目前簡單跳過或未來擴展
+    }
+
+    // 取得今天是星期幾
+    const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const today = days[now.getDay()];
+
+    const todaySchedule = hours.regular[today];
+    if (!todaySchedule || todaySchedule.closed) return false;
+
+    const [openHour, openMinute] = todaySchedule.open.split(':').map(Number);
+    const [closeHour, closeMinute] = todaySchedule.close.split(':').map(Number);
+
+    const openTime = openHour * 60 + openMinute;
+    const closeTime = closeHour * 60 + closeMinute;
+
+    return currentTime >= openTime && currentTime <= closeTime;
+  }
+
+  // 處理舊版營業時間結構
+  if (hours.open && hours.close) {
+    const [openHour, openMinute] = hours.open.split(':').map(Number);
+    const [closeHour, closeMinute] = hours.close.split(':').map(Number);
+
+    const openTime = openHour * 60 + openMinute;
+    const closeTime = closeHour * 60 + closeMinute;
+
+    return currentTime >= openTime && currentTime <= closeTime;
+  }
+
+  return true;
 };
 
 // 午餐店家資料

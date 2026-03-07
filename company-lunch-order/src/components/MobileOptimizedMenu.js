@@ -18,7 +18,7 @@ const MobileOptimizedMenu = ({ store, onBack, onOrderComplete }) => {
     toppings: []
   });
 
-  const storeIsOpen = isStoreOpen(store.hours);
+  const storeIsOpen = isStoreOpen(store);
 
   // 判斷是否為飲料店
   const isDrinkStore = store.type === 'drinks';
@@ -237,9 +237,9 @@ const MobileOptimizedMenu = ({ store, onBack, onOrderComplete }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-900 pb-20 transition-colors duration-200">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-900 pb-20 transition-colors duration-200" >
       {/* 固定標頭 */}
-      <div className="sticky top-0 bg-white dark:bg-slate-800 shadow-sm z-40 border-b border-gray-200 dark:border-slate-700 transition-colors duration-200">
+      < div className="sticky top-0 bg-white dark:bg-slate-800 shadow-sm z-40 border-b border-gray-200 dark:border-slate-700 transition-colors duration-200" >
         <div className="px-4 py-3">
           <div className="flex items-center justify-between">
             <button
@@ -278,7 +278,7 @@ const MobileOptimizedMenu = ({ store, onBack, onOrderComplete }) => {
         </div>
 
         {/* 分類選單 - 水平滾動 */}
-        <div className="px-4 pb-3 overflow-x-auto">
+        <div className="px-4 pb-3 overflow-x-auto" >
           <div className="flex space-x-2">
             {store.categories.map((category) => (
               <button
@@ -293,15 +293,17 @@ const MobileOptimizedMenu = ({ store, onBack, onOrderComplete }) => {
               </button>
             ))}
           </div>
-        </div>
-      </div>
+        </div >
+      </div >
 
       {/* 店家警告（如果休息中） */}
-      {!storeIsOpen && (
-        <div className="mx-4 mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-red-800 text-sm font-medium">店家目前休息中，無法下訂</p>
-        </div>
-      )}
+      {
+        !storeIsOpen && (
+          <div className="mx-4 mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-800 text-sm font-medium">店家目前休息中，無法下訂</p>
+          </div>
+        )
+      }
 
       {/* 商品列表 */}
       <div className="px-4 py-4">
@@ -344,215 +346,221 @@ const MobileOptimizedMenu = ({ store, onBack, onOrderComplete }) => {
       </div>
 
       {/* 客製化選單彈窗（飲料專用） */}
-      {showCustomization && selectedItem && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end">
-          <div className="bg-white dark:bg-slate-800 w-full max-h-[90vh] rounded-t-2xl overflow-y-auto transition-colors">
-            <div className="sticky top-0 bg-white dark:bg-slate-800 p-4 border-b border-gray-200 dark:border-slate-700 z-10">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white">{selectedItem.name}</h3>
-                <button
-                  onClick={closeCustomization}
-                  className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 dark:text-gray-400 rounded-full"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            <div className="p-4">
-              {/* 甜度選擇 */}
-              <div className="mb-6">
-                <h4 className="font-medium mb-3 text-gray-900">甜度</h4>
-                <div className="grid grid-cols-3 gap-2">
-                  {sweetnessOptions.map(level => (
-                    <label
-                      key={level}
-                      className={`flex items-center justify-center p-3 border-2 rounded-lg cursor-pointer transition-colors ${customization.sweetness === level
-                        ? 'border-indigo-600 bg-indigo-50'
-                        : 'border-gray-200 hover:border-gray-300'
-                        }`}
-                    >
-                      <input
-                        type="radio"
-                        name="sweetness"
-                        value={level}
-                        checked={customization.sweetness === level}
-                        onChange={(e) => setCustomization({ ...customization, sweetness: e.target.value })}
-                        className="hidden"
-                      />
-                      <span className={`text-sm font-medium ${customization.sweetness === level ? 'text-indigo-700' : 'text-gray-700'
-                        }`}>{level}</span>
-                    </label>
-                  ))}
+      {
+        showCustomization && selectedItem && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end">
+            <div className="bg-white dark:bg-slate-800 w-full max-h-[90vh] rounded-t-2xl overflow-y-auto transition-colors">
+              <div className="sticky top-0 bg-white dark:bg-slate-800 p-4 border-b border-gray-200 dark:border-slate-700 z-10">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">{selectedItem.name}</h3>
+                  <button
+                    onClick={closeCustomization}
+                    className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 dark:text-gray-400 rounded-full"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
                 </div>
               </div>
 
-              {/* 冰塊選擇 */}
-              <div className="mb-6">
-                <h4 className="font-medium mb-3 text-gray-900">冰塊</h4>
-                <div className="grid grid-cols-3 gap-2">
-                  {iceOptions.map(level => (
-                    <label
-                      key={level}
-                      className={`flex items-center justify-center p-3 border-2 rounded-lg cursor-pointer transition-colors ${customization.ice === level
-                        ? 'border-indigo-600 bg-indigo-50'
-                        : 'border-gray-200 hover:border-gray-300'
-                        }`}
-                    >
-                      <input
-                        type="radio"
-                        name="ice"
-                        value={level}
-                        checked={customization.ice === level}
-                        onChange={(e) => setCustomization({ ...customization, ice: e.target.value })}
-                        className="hidden"
-                      />
-                      <span className={`text-sm font-medium ${customization.ice === level ? 'text-indigo-700' : 'text-gray-700'
-                        }`}>{level}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              {/* 加料選擇 */}
-              <div className="mb-6">
-                <h4 className="font-medium mb-3 text-gray-900">加料 (+$10-20)</h4>
-                <div className="space-y-2">
-                  {toppingOptions.map(topping => {
-                    const isSelected = customization.toppings.find(t => t.id === topping.id);
-                    return (
+              <div className="p-4">
+                {/* 甜度選擇 */}
+                <div className="mb-6">
+                  <h4 className="font-medium mb-3 text-gray-900">甜度</h4>
+                  <div className="grid grid-cols-3 gap-2">
+                    {sweetnessOptions.map(level => (
                       <label
-                        key={topping.id}
-                        className={`flex items-center justify-between p-3 border-2 rounded-lg cursor-pointer transition-colors ${isSelected
+                        key={level}
+                        className={`flex items-center justify-center p-3 border-2 rounded-lg cursor-pointer transition-colors ${customization.sweetness === level
                           ? 'border-indigo-600 bg-indigo-50'
                           : 'border-gray-200 hover:border-gray-300'
                           }`}
                       >
-                        <div className="flex items-center">
-                          <input
-                            type="checkbox"
-                            checked={!!isSelected}
-                            onChange={() => toggleTopping(topping)}
-                            className="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                          />
-                          <span className={`ml-3 font-medium ${isSelected ? 'text-indigo-700' : 'text-gray-700'
-                            }`}>{topping.name}</span>
-                        </div>
-                        <span className="font-bold text-indigo-600">+${topping.price}</span>
+                        <input
+                          type="radio"
+                          name="sweetness"
+                          value={level}
+                          checked={customization.sweetness === level}
+                          onChange={(e) => setCustomization({ ...customization, sweetness: e.target.value })}
+                          className="hidden"
+                        />
+                        <span className={`text-sm font-medium ${customization.sweetness === level ? 'text-indigo-700' : 'text-gray-700'
+                          }`}>{level}</span>
                       </label>
-                    );
-                  })}
+                    ))}
+                  </div>
                 </div>
-              </div>
 
-              {/* 確認按鈕 */}
-              <button
-                onClick={addToCartWithCustomization}
-                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-xl font-medium text-lg transition-colors"
-              >
-                加入購物車 - NT$ {selectedItem.price + getToppingPrice()}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+                {/* 冰塊選擇 */}
+                <div className="mb-6">
+                  <h4 className="font-medium mb-3 text-gray-900">冰塊</h4>
+                  <div className="grid grid-cols-3 gap-2">
+                    {iceOptions.map(level => (
+                      <label
+                        key={level}
+                        className={`flex items-center justify-center p-3 border-2 rounded-lg cursor-pointer transition-colors ${customization.ice === level
+                          ? 'border-indigo-600 bg-indigo-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                      >
+                        <input
+                          type="radio"
+                          name="ice"
+                          value={level}
+                          checked={customization.ice === level}
+                          onChange={(e) => setCustomization({ ...customization, ice: e.target.value })}
+                          className="hidden"
+                        />
+                        <span className={`text-sm font-medium ${customization.ice === level ? 'text-indigo-700' : 'text-gray-700'
+                          }`}>{level}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
 
-      {/* 底部購物車按鈕 */}
-      {getCartItemCount() > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-800 border-t border-gray-200 dark:border-slate-700 p-4 z-50 transition-colors">
-          <button
-            onClick={() => setShowCart(true)}
-            className="w-full bg-indigo-600 text-white py-4 rounded-xl font-medium text-lg hover:bg-indigo-700 transition-colors flex items-center justify-between"
-            disabled={isOrdering}
-          >
-            <span>查看購物車 ({getCartItemCount()})</span>
-            <span>NT$ {getTotalPrice()}</span>
-          </button>
-        </div>
-      )}
+                {/* 加料選擇 */}
+                <div className="mb-6">
+                  <h4 className="font-medium mb-3 text-gray-900">加料 (+$10-20)</h4>
+                  <div className="space-y-2">
+                    {toppingOptions.map(topping => {
+                      const isSelected = customization.toppings.find(t => t.id === topping.id);
+                      return (
+                        <label
+                          key={topping.id}
+                          className={`flex items-center justify-between p-3 border-2 rounded-lg cursor-pointer transition-colors ${isSelected
+                            ? 'border-indigo-600 bg-indigo-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                            }`}
+                        >
+                          <div className="flex items-center">
+                            <input
+                              type="checkbox"
+                              checked={!!isSelected}
+                              onChange={() => toggleTopping(topping)}
+                              className="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                            />
+                            <span className={`ml-3 font-medium ${isSelected ? 'text-indigo-700' : 'text-gray-700'
+                              }`}>{topping.name}</span>
+                          </div>
+                          <span className="font-bold text-indigo-600">+${topping.price}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
 
-      {/* 購物車彈窗 */}
-      {showCart && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end">
-          <div className="bg-white dark:bg-slate-800 w-full max-h-[80vh] rounded-t-2xl transition-colors">
-            <div className="p-4 border-b border-gray-200 dark:border-slate-700">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">購物車</h3>
+                {/* 確認按鈕 */}
                 <button
-                  onClick={() => setShowCart(false)}
-                  className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 dark:text-gray-400 rounded-full"
+                  onClick={addToCartWithCustomization}
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-xl font-medium text-lg transition-colors"
                 >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+                  加入購物車 - NT$ {selectedItem.price + getToppingPrice()}
                 </button>
               </div>
             </div>
+          </div>
+        )
+      }
 
-            <div className="p-4 max-h-96 overflow-y-auto">
-              {Object.values(cart).map((item) => (
-                <div key={item.id} className="py-3 border-b border-gray-100 dark:border-slate-700 last:border-b-0">
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex-1">
-                      <h4 className="font-medium text-gray-900 dark:text-white">{item.name}</h4>
-                      <p className="text-indigo-600 dark:text-indigo-400 font-bold">NT$ {item.finalPrice || item.price}</p>
-                      {item.customization && (
-                        <div className="mt-1 text-xs text-gray-600 dark:text-gray-400 space-y-0.5">
-                          <p>甜度: {item.customization.sweetness} | 冰塊: {item.customization.ice}</p>
-                          {item.customization.toppings.length > 0 && (
-                            <p>加料: {item.customization.toppings.map(t => t.name).join('、')}</p>
-                          )}
-                        </div>
-                      )}
-                    </div>
+      {/* 底部購物車按鈕 */}
+      {
+        getCartItemCount() > 0 && (
+          <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-800 border-t border-gray-200 dark:border-slate-700 p-4 z-50 transition-colors">
+            <button
+              onClick={() => setShowCart(true)}
+              className="w-full bg-indigo-600 text-white py-4 rounded-xl font-medium text-lg hover:bg-indigo-700 transition-colors flex items-center justify-between"
+              disabled={isOrdering}
+            >
+              <span>查看購物車 ({getCartItemCount()})</span>
+              <span>NT$ {getTotalPrice()}</span>
+            </button>
+          </div>
+        )
+      }
 
-                    <div className="flex items-center space-x-3 ml-4">
-                      <button
-                        onClick={() => removeFromCart(item.id)}
-                        className="w-8 h-8 rounded-full bg-gray-200 text-gray-600 hover:bg-gray-300 flex items-center justify-center"
-                      >
-                        -
-                      </button>
-                      <span className="font-medium">{item.quantity}</span>
-                      <button
-                        onClick={() => {
-                          const updatedCart = { ...cart };
-                          updatedCart[item.id].quantity += 1;
-                          setCart(updatedCart);
-                        }}
-                        className="w-8 h-8 rounded-full bg-indigo-600 text-white hover:bg-indigo-700 flex items-center justify-center"
-                      >
-                        +
-                      </button>
-                    </div>
-                  </div>
+      {/* 購物車彈窗 */}
+      {
+        showCart && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end">
+            <div className="bg-white dark:bg-slate-800 w-full max-h-[80vh] rounded-t-2xl transition-colors">
+              <div className="p-4 border-b border-gray-200 dark:border-slate-700">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">購物車</h3>
+                  <button
+                    onClick={() => setShowCart(false)}
+                    className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 dark:text-gray-400 rounded-full"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
                 </div>
-              ))}
-            </div>
-
-            <div className="p-4 border-t border-gray-200 dark:border-slate-700">
-              <div className="flex justify-between items-center mb-4">
-                <span className="text-lg font-semibold text-gray-900 dark:text-white">總計</span>
-                <span className="text-xl font-bold text-indigo-600 dark:text-indigo-400">NT$ {getTotalPrice()}</span>
               </div>
 
-              <button
-                onClick={submitOrder}
-                disabled={isOrdering || !checkMinOrder() || !storeIsOpen}
-                className={`w-full py-3 rounded-xl font-medium text-lg transition-colors ${isOrdering || !checkMinOrder() || !storeIsOpen
-                  ? 'bg-gray-300 text-gray-500'
-                  : 'bg-indigo-600 text-white hover:bg-indigo-700'
-                  }`}
-              >
-                {isOrdering ? '處理中...' : '確認訂單'}
-              </button>
+              <div className="p-4 max-h-96 overflow-y-auto">
+                {Object.values(cart).map((item) => (
+                  <div key={item.id} className="py-3 border-b border-gray-100 dark:border-slate-700 last:border-b-0">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex-1">
+                        <h4 className="font-medium text-gray-900 dark:text-white">{item.name}</h4>
+                        <p className="text-indigo-600 dark:text-indigo-400 font-bold">NT$ {item.finalPrice || item.price}</p>
+                        {item.customization && (
+                          <div className="mt-1 text-xs text-gray-600 dark:text-gray-400 space-y-0.5">
+                            <p>甜度: {item.customization.sweetness} | 冰塊: {item.customization.ice}</p>
+                            {item.customization.toppings.length > 0 && (
+                              <p>加料: {item.customization.toppings.map(t => t.name).join('、')}</p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex items-center space-x-3 ml-4">
+                        <button
+                          onClick={() => removeFromCart(item.id)}
+                          className="w-8 h-8 rounded-full bg-gray-200 text-gray-600 hover:bg-gray-300 flex items-center justify-center"
+                        >
+                          -
+                        </button>
+                        <span className="font-medium">{item.quantity}</span>
+                        <button
+                          onClick={() => {
+                            const updatedCart = { ...cart };
+                            updatedCart[item.id].quantity += 1;
+                            setCart(updatedCart);
+                          }}
+                          className="w-8 h-8 rounded-full bg-indigo-600 text-white hover:bg-indigo-700 flex items-center justify-center"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="p-4 border-t border-gray-200 dark:border-slate-700">
+                <div className="flex justify-between items-center mb-4">
+                  <span className="text-lg font-semibold text-gray-900 dark:text-white">總計</span>
+                  <span className="text-xl font-bold text-indigo-600 dark:text-indigo-400">NT$ {getTotalPrice()}</span>
+                </div>
+
+                <button
+                  onClick={submitOrder}
+                  disabled={isOrdering || !checkMinOrder() || !storeIsOpen}
+                  className={`w-full py-3 rounded-xl font-medium text-lg transition-colors ${isOrdering || !checkMinOrder() || !storeIsOpen
+                    ? 'bg-gray-300 text-gray-500'
+                    : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                    }`}
+                >
+                  {isOrdering ? '處理中...' : '確認訂單'}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+    </div >
   );
 };
 

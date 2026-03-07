@@ -150,7 +150,7 @@ const StoreCardList = ({ type, onStoreSelect }) => {
         {stores
           .filter(store => !showFavoritesOnly || favorites.includes(store.id))
           .map((store) => {
-            const storeOpen = isStoreOpen(store.hours);
+            const storeOpen = isStoreOpen(store);
             const isFavorite = favorites.includes(store.id);
             const isToggling = togglingMap[store.id];
 
