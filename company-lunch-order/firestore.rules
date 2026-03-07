@@ -50,7 +50,8 @@ service cloud.firestore {
     //         However, stricter rule: only read own role? 
     //         AuthContext loads `userRoles/{uid}`.
     match /userRoles/{userId} {
-      allow read: if isAuthenticated(); // Needed for frontend role check
+      // 自己的角色可以讀，或者是管理員 (Admin/SuperAdmin) 可以讀取所有人的角色
+      allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
       allow write: if isSuperAdmin(); // Only SuperAdmin can assign roles
     }
 
