@@ -1,6 +1,6 @@
 // src/components/admin/StoreManagement/MenuEditor.js
-import React, { useState, useEffect } from 'react';
-import { Save, X, Plus, FolderInput, Folder, Package, AlertCircle, ChevronUp, ChevronDown, Edit2, Trash2 } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Save, X, Plus, FolderInput, Folder, Package, AlertCircle, ChevronUp, ChevronDown, Edit2, Trash2, Download, Upload } from 'lucide-react';
 import CategoryPanel from './CategoryPanel';
 import ItemPanel from './ItemPanel';
 import CategoryForm from './CategoryForm';
@@ -37,6 +37,9 @@ const MenuEditor = ({ store, onClose, onSave }) => {
 
   // Toast 提示狀態
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+
+  // JSON 匯入 Ref
+  const jsonInputRef = useRef(null);
 
   // 初始化菜單資料
   useEffect(() => {
@@ -622,6 +625,58 @@ const MenuEditor = ({ store, onClose, onSave }) => {
     onClose();
   };
 
+  // ============================================
+  // JSON 備份與還原
+  // ============================================
+
+  const handleExportJSON = () => {
+    try {
+      const exportData = JSON.stringify(categories, null, 2);
+      const blob = new Blob([exportData], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${store.name}_菜單備份_${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast('菜單 JSON 備份已下載', 'success');
+    } catch (err) {
+      console.error('匯出 JSON 失敗:', err);
+      alert('匯出失敗');
+    }
+  };
+
+  const handleImportJSON = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const importedCategories = JSON.parse(event.target.result);
+        if (!Array.isArray(importedCategories)) {
+          throw new Error('匯入的 JSON 格式錯誤：必須是陣列格式');
+        }
+
+        if (window.confirm('確定要從 JSON 檔案還原菜單嗎？現有的未儲存變更將被覆蓋！')) {
+          setCategories(importedCategories);
+          setHasChanges(true);
+          showToast('JSON 菜單已匯入！請確認後點擊「儲存變更」正式存檔。', 'success');
+        }
+      } catch (err) {
+        console.error('匯入 JSON 失敗:', err);
+        alert(`解析 JSON 失敗: ${err.message}`);
+      }
+
+      // 重置 input, 讓下次選擇同一個檔案也能觸發 onChange
+      if (jsonInputRef.current) {
+        jsonInputRef.current.value = '';
+      }
+    };
+    reader.readAsText(file);
+  };
+
   // 檢測螢幕寬度
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
@@ -709,36 +764,49 @@ const MenuEditor = ({ store, onClose, onSave }) => {
             </button>
 
             <button
+              onClick={() => jsonInputRef.current?.click()}
+              className="px-4 py-2 bg-blue-50 border border-blue-200 text-blue-700 rounded-lg hover:bg-blue-100 flex items-center gap-2"
+              title="從 JSON 完整還原菜單"
+            >
+              <Upload size={18} />
+              <span className="hidden sm:inline">匯入 JSON</span>
+            </button>
+            <input
+              type="file"
+              accept=".json"
+              className="hidden"
+              ref={jsonInputRef}
+              onChange={handleImportJSON}
+            />
+
+            <button
+              onClick={handleExportJSON}
+              className="px-4 py-2 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-lg hover:bg-emerald-100 flex items-center gap-2"
+              title="匯出完整菜單為 JSON"
+            >
+              <Download size={18} />
+              <span className="hidden sm:inline">備份 JSON</span>
+            </button>
+
+            <button
               onClick={() => setShowCSVImport(true)}
               className="px-4 py-2 bg-indigo-50 border border-indigo-200 text-indigo-700 rounded-lg hover:bg-indigo-100 flex items-center gap-2"
             >
               <FolderInput size={18} />
-              匯入 CSV
+              <span className="hidden sm:inline">匯入 CSV</span>
             </button>
           </div>
         </div>
 
-        {/* CSV 匯入面板 */}
         {showCSVImport && (
           <CSVImportPanel
             store={store}
             onClose={() => setShowCSVImport(false)}
-            onImportComplete={() => {
+            onImportComplete={(mergedCategories) => {
+              setCategories(mergedCategories);
+              setHasChanges(true);
               setShowCSVImport(false);
-              showToast('CSV 匯入成功！請記得儲存變更');
-              // 重新載入 store 的部份通常由 parent 控制，但在這裡我們的 state 是 local 的
-              // Import tool 可能直接寫入 Firestore，所以這裡應該提示使用者重新整理或自動重整
-              // 但 executeImport 也是異步的
-              // 我們的 CSVImportPanel 直接更新了 Firestore
-              // 所以這裡我們可以選擇讓 MenuEditor 重新 fetch 或者通知 parent
-              // 但最簡單的是直接重刷畫面，或者手動更新 local categories
-              // CSVImportPanel 已更新 Firestore，所以這裡最好是觸發 onSave 之後的 reload
-              // 或者我們讓 CSVImportPanel 回傳新的 categories
-              // 讓我們修改一下 CSVImportPanel 讓它不要直接寫入 Firestore 而是透過 callback? 
-              // 不，CSVImportPanel 設計是 executeImport 直接寫入。
-              // 為了同步，我們可以強制 reload window 或者呼叫 onSave 來 refresh
-              // 更好的做法：executeImport 回傳新的 categories，我們在這裡 setCategories
-              // 讓我們修改 CSVImportPanel 傳遞 handleImportSuccess
+              showToast('CSV 匯入完成！請檢閱下方資料，確認無誤後點擊左上方「儲存變更」以正式存檔。', 'success');
             }}
           />
         )}

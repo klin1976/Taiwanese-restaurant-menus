@@ -173,7 +173,20 @@ export const processImportData = (rawData, currentStore) => {
       if (existingItem) {
         itemData.id = existingItem.id; // 保留 ID
         itemData.isUpdate = true;
-        stats.updatedItems++;
+        itemData.oldData = existingItem; // 新增：保留舊資料以供 Diff 比較
+        
+        // 判斷是否資料完全一致 (跳過沒必要的更新)
+        const isIdentical = 
+          existingItem.name === itemData.name &&
+          existingItem.price === itemData.price &&
+          (existingItem.description || '') === (itemData.description || '') &&
+          existingItem.status === itemData.status;
+
+        itemData.isIdentical = isIdentical;
+        
+        if (!isIdentical) {
+          stats.updatedItems++;
+        }
       } else {
         itemData.id = `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         itemData.isUpdate = false;
@@ -196,20 +209,19 @@ export const processImportData = (rawData, currentStore) => {
 };
 
 /**
- * 執行匯入 (寫入 Firestore)
- * @param {string} storeId - 店家 ID
- * @param {string} storeType - 店家類型
+ * 將匯入資料合併到目前分類中 (純前端操作)
  * @param {Array} processedItems - 處理後的資料
- * @param {Object} currentStore - 目前店家資料
- * @returns {Promise<void>}
+ * @param {Array} currentCategories - 既有的分類資料
+ * @param {Array} skipIds - 使用者決定跳過(不覆蓋)的商品 ID 集合
+ * @returns {Array} 合併後的新分類陣列
  */
-export const executeImport = async (storeId, storeType, processedItems, currentStore) => {
-  if (!storeId || !storeType) throw new Error('Store ID and Type are required');
-
-  // 深拷貝目前的分類結構，以免修改到副作用
-  let newCategories = currentStore.categories ? JSON.parse(JSON.stringify(currentStore.categories)) : [];
+export const mergeImportDataToCategories = (processedItems, currentCategories, skipIds = []) => {
+  let newCategories = currentCategories ? JSON.parse(JSON.stringify(currentCategories)) : [];
 
   processedItems.forEach(item => {
+    // 檢查是否被使用者手動標記跳過，或是資料完全一致而自動跳過
+    if (skipIds.includes(item.id) || item.isIdentical) return;
+
     // 1. 處理分類
     let category = newCategories.find(c => c.name === item.categoryName);
 
@@ -217,36 +229,34 @@ export const executeImport = async (storeId, storeType, processedItems, currentS
       category = {
         id: `cat_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
         name: item.categoryName,
+        sortOrder: newCategories.length + 1,
         items: []
       };
       newCategories.push(category);
     }
-
-    // 確保 items 陣列存在
     if (!category.items) category.items = [];
 
     // 2. 處理商品
-    const itemIndex = category.items.findIndex(i => i.name === item.name);
+    const itemIndex = category.items.findIndex(i => i.id === item.id || i.name === item.name);
 
     const newItemData = {
       id: item.id,
       name: item.name,
-      basePrice: item.price, // 使用新欄位 basePrice
+      price: item.price,
+      basePrice: item.price,
       description: item.description || '',
       status: item.status,
       tags: item.tags,
-      // 保留或初始化其他欄位
-      images: itemIndex > -1 ? category.items[itemIndex].images : { main: '', gallery: [] },
+      images: itemIndex > -1 && category.items[itemIndex].images ? category.items[itemIndex].images : { main: '', gallery: [] },
       hasVariants: itemIndex > -1 ? category.items[itemIndex].hasVariants : false,
       variants: itemIndex > -1 ? category.items[itemIndex].variants : [],
-      // 優先使用匯入資料中的選項設定，否則使用現有資料，最後才預設為 false/[]
       hasOptions: item.hasOptions !== undefined ? item.hasOptions : (itemIndex > -1 ? category.items[itemIndex].hasOptions : false),
       optionGroups: item.optionGroups !== undefined ? item.optionGroups : (itemIndex > -1 ? category.items[itemIndex].optionGroups : []),
-      sortOrder: itemIndex > -1 ? category.items[itemIndex].sortOrder : 999
+      sortOrder: itemIndex > -1 ? category.items[itemIndex].sortOrder : category.items.length + 1
     };
 
     if (itemIndex > -1) {
-      // 更新
+      // 覆蓋
       category.items[itemIndex] = {
         ...category.items[itemIndex],
         ...newItemData
@@ -257,12 +267,20 @@ export const executeImport = async (storeId, storeType, processedItems, currentS
     }
   });
 
-  // 3. 寫入 Firestore
+  return newCategories;
+};
+
+/**
+ * 執行匯入 (寫入 Firestore)
+ * 保留供直接寫入需求使用
+ */
+export const executeImport = async (storeId, storeType, processedItems, currentStore) => {
+  if (!storeId || !storeType) throw new Error('Store ID and Type are required');
+  const newCategories = mergeImportDataToCategories(processedItems, currentStore.categories || []);
   const storeRef = doc(db, 'stores', storeType, 'list', storeId);
   await updateDoc(storeRef, {
     categories: newCategories,
     updatedAt: new Date()
   });
-
   return newCategories;
 };

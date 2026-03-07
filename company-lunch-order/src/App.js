@@ -15,6 +15,7 @@ import StoreManagement from './components/admin/StoreManagement/StoreManagement'
 import InitSuperAdmin from './components/InitSuperAdmin';
 import { initializeStores } from './utils/initializeStores';
 import { createOrder } from './services/orderService';
+import NotificationManager from './components/NotificationManager';
 
 // 檢測是否為手機設備
 const isMobile = () => {
@@ -163,6 +164,7 @@ const AppContent = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-indigo-50 dark:from-slate-900 dark:to-slate-800 transition-colors duration-200">
       <Header onNavigate={setCurrentView} />
+      <NotificationManager />
 
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
 
