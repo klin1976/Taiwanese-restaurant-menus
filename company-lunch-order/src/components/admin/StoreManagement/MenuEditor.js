@@ -1,6 +1,6 @@
 // src/components/admin/StoreManagement/MenuEditor.js
 import React, { useState, useEffect, useRef } from 'react';
-import { Save, X, Plus, FolderInput, Folder, Package, AlertCircle, ChevronUp, ChevronDown, Edit2, Trash2, Download, Upload } from 'lucide-react';
+import { Save, X, Plus, FolderInput, Folder, Package, AlertCircle, ChevronUp, ChevronDown, Edit2, Trash2, Download, Upload, Sparkles } from 'lucide-react';
 import CategoryPanel from './CategoryPanel';
 import ItemPanel from './ItemPanel';
 import CategoryForm from './CategoryForm';
@@ -10,6 +10,7 @@ import { updateStore } from '../../../services/storeManagementService';
 
 import { useAuth } from '../../../contexts/AuthContext';
 import CSVImportPanel from './CSVImportPanel';
+import AIMenuScanner from './AIMenuScanner';
 
 const MenuEditor = ({ store, onClose, onSave }) => {
   const { currentUser, isSuperAdmin } = useAuth();
@@ -34,6 +35,7 @@ const MenuEditor = ({ store, onClose, onSave }) => {
 
   // CSV 匯入狀態
   const [showCSVImport, setShowCSVImport] = useState(false);
+  const [showAIScanner, setShowAIScanner] = useState(false);
 
   // Toast 提示狀態
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
@@ -795,6 +797,15 @@ const MenuEditor = ({ store, onClose, onSave }) => {
               <FolderInput size={18} />
               <span className="hidden sm:inline">匯入 CSV</span>
             </button>
+
+            <button
+              onClick={() => setShowAIScanner(true)}
+              className="px-4 py-2 bg-violet-50 border border-violet-200 text-violet-700 rounded-lg hover:bg-violet-100 flex items-center gap-2"
+              title="使用 AI 辨識菜單照片"
+            >
+              <Sparkles size={18} />
+              <span className="hidden sm:inline">AI 辨識</span>
+            </button>
           </div>
         </div>
 
@@ -807,6 +818,19 @@ const MenuEditor = ({ store, onClose, onSave }) => {
               setHasChanges(true);
               setShowCSVImport(false);
               showToast('CSV 匯入完成！請檢閱下方資料，確認無誤後點擊左上方「儲存變更」以正式存檔。', 'success');
+            }}
+          />
+        )}
+
+        {showAIScanner && (
+          <AIMenuScanner
+            store={store}
+            onClose={() => setShowAIScanner(false)}
+            onImportComplete={(mergedCategories) => {
+              setCategories(mergedCategories);
+              setHasChanges(true);
+              setShowAIScanner(false);
+              showToast('🤖 AI 辨識匯入完成！請檢閱下方資料，確認無誤後點擊左上方「儲存變更」以正式存檔。', 'success');
             }}
           />
         )}

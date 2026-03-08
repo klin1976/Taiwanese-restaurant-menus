@@ -4,9 +4,15 @@ const admin = require("firebase-admin");
 const functions = require("firebase-functions"); // Key for legacy config
 const fetch = require("node-fetch");
 
+// AI 菜單辨識模組
+const { analyzeMenuImage } = require("./menuAI");
+
 admin.initializeApp();
 
 setGlobalOptions({ region: "asia-east1" });
+
+// P4: AI 菜單辨識
+exports.analyzeMenuImage = analyzeMenuImage;
 
 exports.sendTeamsNotification = onCall(async (request) => {
     console.log("=== Cloud Function Start (v3.1 - Config Fix) ===");
