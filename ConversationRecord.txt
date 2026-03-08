@@ -194,3 +194,7 @@ Google Chat 非常適合店家通知。建議採用混合策略：店家端接 W
 2. 安全防護：加入 API 呼叫的速率限制機制與 4MB 圖片壓縮，保護雲端運算額度。
 3. 前端 UI 整合：新增 AIMenuScanner 元件並掛載於 MenuEditor，具備手機拍照、影像壓縮、辨識動畫與衝突比對預覽畫面。
 4. 雲端部署：已正式部署至 Firebase (asia-east1 節點)，並正式上線。
+
+[2026-03-08 19:30] AI 回應
+---
+修正 AI 菜單辨識 CORS 錯誤：因 setGlobalOptions({ region: 'asia-east1' }) 宣告順序在 equire('./menuAI') 之後，導致 Firebase 將 nalyzeMenuImage 部署至預設的 us-central1；但由於前端仍然嘗試呼叫 sia-east1，從而觸發 HTTP CORS 錯誤。亦修正了 Node 20 讀取專案 ID 變數的相容性 (使用 GCP_PROJECT 取代 GCLOUD_PROJECT)。已完成重新部署並上線。
