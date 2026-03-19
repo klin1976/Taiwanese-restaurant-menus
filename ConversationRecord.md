@@ -2,6 +2,20 @@
 
 ---
 
+### [2026-03-19 21:40] AI 回應
+**修復 P4 AI 菜單辨識穩定性 (解決 JSON 解析與思考模式干擾)：**
+
+1.  **問題診斷**：確認 Gemini 2.5 Flash 在生成回應時，有時會混雜「思考模式 (thinking mode)」的文字與 JSON 結構，造成前端 `JSON.parse` 報錯及截斷現象。
+2.  **核心修復方案 (menuAI.js)**：
+    *   實作強效提取機制：透過 `indexOf('{')` 與 `lastIndexOf('}')` 精確計算 JSON 物理邊界，物理性隔離所有非 JSON 的推理文字或日誌資訊。
+    *   強化 Response 文字累加邏輯：確保多段 (Multi-part) 回應能被完整拼接。
+3.  **模型與部署優化**：
+    *   驗證 `gemini-2.0-flash-001` 在當前環境的可用性（目前回傳 404），決定退回並深耕穩定的 `gemini-2.5-flash`。
+    *   修正 `menuAI.js` 語法錯誤（大括號閉合問題），確保程式碼品質。
+    *   成功重新部署 Cloud Functions 至 Firebase `asia-east1`。
+
+---
+
 ### [2026-03-08 18:45] AI 回應
 **實作 P4 AI 菜單圖片辨識功能：**
 
@@ -14,6 +28,17 @@
     *   設計高穩定度繁體中文 Prompt，準確解析商品、價格、規格與分類。
     *   提供嚴密的 JSON 取代正規化驗證。
     *   內建基於 Memory Cache 的簡易防護與限制（Rate Limit: 5次/分），以防止惡意呼叫耗盡額度。
+
+---
+
+### [2026-03-08 19:30] AI 回應
+**修正錯誤 - 解決 AI 菜單辨識 CORS 阻擋問題：**
+
+經排查日誌與原始碼，發現最初上線版本遇到 `Access to fetch ... blocked by CORS policy` 錯誤由以下兩點引發：
+1. **Region 設定生效時機**：`functions/index.js` 中 `require("./menuAI")` 在 `setGlobalOptions({ region: "asia-east1" })` **之前**執行，導致 Cloud Function `analyzeMenuImage` 默默被佈署到了預設的 `us-central1` 伺服器，使前端找不到正確端點而觸發 CORS 機制。
+2. **2nd Gen 無法自動讀取 GCLOUD_PROJECT 環境變數**：在本地端測試後發現函數執行會因為找不到專案 ID 拋出 `Could not load the default credentials` 給 Vertex AI SDK，已將 `GCLOUD_PROJECT` 退回/相容 2nd Gen 的 `GCP_PROJECT` 變數提取方式。
+
+上述缺失已完全修正並重新覆蓋上線至 `asia-east1` 伺服器。
 
 ---
 
@@ -53,4 +78,4 @@
 ---
 
 > [!NOTE]
-> 以上紀錄為今日（2026-03-07）的工作彙整。歷史紀錄請參閱 [ConversationRecord.txt](./ConversationRecord.txt)。
+> 以上紀錄為今日（2026-03-19）的工作彙整。歷史紀錄請參閱 [ConversationRecord.txt](./ConversationRecord.txt)。

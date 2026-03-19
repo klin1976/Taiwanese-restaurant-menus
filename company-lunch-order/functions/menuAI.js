@@ -81,7 +81,7 @@ const DRINKS_PROMPT_SUFFIX = `
 exports.analyzeMenuImage = onCall(
     {
         maxInstances: 10,
-        timeoutSeconds: 60,
+        timeoutSeconds: 120,
         memory: "512MiB",
     },
     async (request) => {
@@ -126,17 +126,18 @@ exports.analyzeMenuImage = onCall(
 
         // 4. Call Gemini Vision API
         try {
+            const projectId = process.env.GCP_PROJECT || process.env.GCLOUD_PROJECT || "company-lunch-order";
             const vertexAI = new VertexAI({
-                project: process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT,
-                location: "asia-east1",
+                project: projectId,
+                location: "us-central1", // 模型在此區域最齊全，Cloud Function 本身仍在 asia-east1
             });
 
             const model = vertexAI.getGenerativeModel({
-                model: "gemini-2.5-flash-preview-05-20",
+                model: "gemini-2.5-flash",
                 generationConfig: {
-                    maxOutputTokens: 4096,
+                    maxOutputTokens: 8192,
                     temperature: 0.1, // 低溫度 = 更精確
-                    topP: 0.8,
+                    responseMimeType: "application/json", // 強制 JSON 輸出
                 },
             });
 
@@ -153,7 +154,7 @@ exports.analyzeMenuImage = onCall(
                 },
             };
 
-            console.log("Calling Gemini API...");
+            console.log("Calling Gemini 2.0 Flash API...");
             const result = await model.generateContent({
                 contents: [
                     {
@@ -164,42 +165,64 @@ exports.analyzeMenuImage = onCall(
             });
 
             const response = result.response;
-            const textContent =
-                response.candidates?.[0]?.content?.parts?.[0]?.text;
+
+            // 從 response 中提取文字內容
+            // 方式 1: 直接使用 response.text() (Vertex AI SDK 提供的便捷方法)
+            let textContent = "";
+            try {
+                // Vertex AI SDK 的 response 物件通常有 text() 方法
+                const candidateText = response.candidates?.[0]?.content?.parts
+                    ?.map(p => p.text || "")
+                    .join("") || "";
+                textContent = candidateText;
+            } catch (extractError) {
+                console.error("Text extraction error:", extractError.message);
+            }
+
+            // 方式 2 回退: 嘗試 response.text()
+            if (!textContent) {
+                try {
+                    textContent = response.text?.() || "";
+                } catch (e) {
+                    console.error("response.text() failed:", e.message);
+                }
+            }
+
+            console.log(`Response text length: ${textContent.length} chars`);
+            console.log(`Response text preview (first 300): ${textContent.substring(0, 300)}`);
+            console.log(`Response text tail (last 100): ${textContent.substring(textContent.length - 100)}`);
 
             if (!textContent) {
-                console.error("Gemini returned empty response");
+                console.error("Gemini returned empty response. Full response:", JSON.stringify(response).substring(0, 500));
                 return {
                     success: false,
                     error: "AI 未回傳有效結果，請嘗試更清晰的照片",
                 };
             }
 
-            console.log(`Gemini response length: ${textContent.length} chars`);
-
             // 5. Parse and Validate JSON
             let parsedResult;
             try {
-                // 清理可能的 markdown 包裹
-                let cleanJson = textContent.trim();
-                if (cleanJson.startsWith("```json")) {
-                    cleanJson = cleanJson.slice(7);
+                // 由於 Gemini 2.5 Flash 可能會混雜思考過程 (thinking text) 和 JSON
+                // 我們直接尋找 JSON 的邊界：第一個 '{' 和最後一個 '}'
+                const firstBrace = textContent.indexOf('{');
+                const lastBrace = textContent.lastIndexOf('}');
+                
+                if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+                    const extractedJsonStr = textContent.substring(firstBrace, lastBrace + 1);
+                    console.log(`Successfully extracted JSON string of length ${extractedJsonStr.length}`);
+                    parsedResult = JSON.parse(extractedJsonStr);
+                } else {
+                    throw new Error("Cannot find matching JSON braces in response");
                 }
-                if (cleanJson.startsWith("```")) {
-                    cleanJson = cleanJson.slice(3);
-                }
-                if (cleanJson.endsWith("```")) {
-                    cleanJson = cleanJson.slice(0, -3);
-                }
-                cleanJson = cleanJson.trim();
-
-                parsedResult = JSON.parse(cleanJson);
             } catch (parseError) {
                 console.error("JSON parse failed:", parseError.message);
-                console.error("Raw text:", textContent.substring(0, 500));
+                console.error("Raw text (first 500):", textContent.substring(0, 500));
+                console.error("Raw text (last 500):", textContent.substring(textContent.length - 500));
+
                 return {
                     success: false,
-                    error: "AI 回傳格式異常，請重新嘗試",
+                    error: "AI 回傳格式異常，無法解析為有效資料。請重新嘗試。",
                     rawText: textContent.substring(0, 200),
                 };
             }

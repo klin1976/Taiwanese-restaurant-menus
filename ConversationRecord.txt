@@ -198,3 +198,12 @@ Google Chat 非常適合店家通知。建議採用混合策略：店家端接 W
 [2026-03-08 19:30] AI 回應
 ---
 修正 AI 菜單辨識 CORS 錯誤：因 setGlobalOptions({ region: 'asia-east1' }) 宣告順序在 equire('./menuAI') 之後，導致 Firebase 將 nalyzeMenuImage 部署至預設的 us-central1；但由於前端仍然嘗試呼叫 sia-east1，從而觸發 HTTP CORS 錯誤。亦修正了 Node 20 讀取專案 ID 變數的相容性 (使用 GCP_PROJECT 取代 GCLOUD_PROJECT)。已完成重新部署並上線。
+
+--------------------------------------------------------------------------------
+[2026-03-19 21:40] AI 回應
+--------------------------------------------------------------------------------
+修復 P4 AI 菜單辨識穩定性 (解決 JSON 解析與思考模式干擾)：
+1.  問題診斷：確認 Gemini 2.5 Flash 生成回應時會混雜思考模式 (thinking mode) 文字。
+2.  核心修復方案：在 menuAI.js 導入強力 `indexOf('{')` 與 `lastIndexOf('}')` 物理提取 JSON 結構，並優化多段回應拼接。
+3.  模型與部署：回退至穩定的 Gemini 2.5 Flash，修正語法錯誤並成功部署至 Firebase (asia-east1)。
+

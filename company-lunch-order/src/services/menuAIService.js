@@ -79,7 +79,7 @@ export const analyzeMenuImage = async (imageFile, storeType = 'meals') => {
 
     // 2. 呼叫 Cloud Function
     const analyzeFunction = httpsCallable(functions, 'analyzeMenuImage', {
-        timeout: 60000, // 60 秒超時
+        timeout: 120000, // 120 秒超時，對齊 Cloud Function 設定
     });
 
     const result = await analyzeFunction({
