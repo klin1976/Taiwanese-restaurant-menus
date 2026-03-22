@@ -2,6 +2,21 @@
 
 ---
 
+### [2026-03-22 20:42] AI 回應
+**修復權限拒絕與管理員身分判定問題 (Firestore 安全規則與前端常數同步)：**
+
+1.  **問題診斷**：
+    *   管理員在儲存菜單時遇到 `Missing or insufficient permissions` 報錯。
+    *   帳號登入後無法看到管理員介面，權限被判定為一般使用者。
+2.  **核心修復方案**：
+    *   **Firestore 規則優化**：修改 `firestore.rules` 中的 `isAdmin` 與 `isSuperAdmin` 邏輯，從嚴格的單一字串比對改為陣列比對（兼容 `SUPER_ADMIN`, `superadmin`, `super_admin` 等大小寫格式），避免因前端常數定義不同而導致的寫入阻斷。
+    *   **資料庫修正**：將 Firebase Console 中 `userRoles` 集合內使用者的 `role` 欄位從大寫 `SUPER_ADMIN` 還原為前端通用的小寫 `superadmin`。
+3.  **部署測試**：
+    *   透過 `npx firebase-tools` 成功部署新版安全規則。
+    *   確認前端 UI 已恢復超級管理員顯示，且菜單儲存功能恢復正常。
+
+---
+
 ### [2026-03-19 21:40] AI 回應
 **修復 P4 AI 菜單辨識穩定性 (解決 JSON 解析與思考模式干擾)：**
 
@@ -78,4 +93,4 @@
 ---
 
 > [!NOTE]
-> 以上紀錄為今日（2026-03-19）的工作彙整。歷史紀錄請參閱 [ConversationRecord.txt](./ConversationRecord.txt)。
+> 以上紀錄為今日（2026-03-22）的工作彙整。歷史紀錄請參閱 [ConversationRecord.txt](./ConversationRecord.txt)。

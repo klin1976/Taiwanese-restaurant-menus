@@ -211,19 +211,43 @@ export const updateStore = async (storeId, type, updates, currentUser) => {
 
     const storeRef = doc(db, 'stores', type, 'list', storeId);
 
-    // 準備歷史記錄
+    // 準備歷史記錄 (防止大型菜單導致 Firestore 索引數超過上限)
+    const safeDetails = { ...updates };
+    if (safeDetails.categories) {
+      safeDetails.categories = `[Updated ${safeDetails.categories.length} categories]`;
+    }
+
     const historyEntry = {
       at: Timestamp.now(),
       by: currentUser.uid,
       byName: currentUser.displayName || currentUser.email,
       action: 'update_store',
       actionText: '更新店家資訊',
-      details: updates
+      details: safeDetails
     };
 
     // 讀取現有的歷史記錄
     const storeSnap = await getDoc(storeRef);
-    const existingHistory = storeSnap.exists() ? (storeSnap.data().history || []) : [];
+    let existingHistory = storeSnap.exists() ? (storeSnap.data().history || []) : [];
+
+    // 清創手術：將存在舊有歷史檔案中肥大的 categories 垃圾陣列轉為輕量字串，解決舊版文件肥大毒化導致的 Permission 錯誤
+    existingHistory = existingHistory.map(entry => {
+      if (entry.details && Array.isArray(entry.details.categories)) {
+        return {
+          ...entry,
+          details: {
+            ...entry.details,
+            categories: `[Cleaned legacy info of ${entry.details.categories.length} items]`
+          }
+        };
+      }
+      return entry;
+    });
+
+    // 限制歷史長度，防禦無限增長
+    if (existingHistory.length > 20) {
+      existingHistory = existingHistory.slice(-20);
+    }
 
     // 更新資料
     await updateDoc(storeRef, {

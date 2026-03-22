@@ -23,12 +23,12 @@ service cloud.firestore {
 
     // Check if user is Admin or SuperAdmin
     function isAdmin() {
-      return isAuthenticated() && (getUserRole() in ['ADMIN', 'SUPER_ADMIN']);
+      return isAuthenticated() && (getUserRole() in ['ADMIN', 'SUPER_ADMIN', 'admin', 'superadmin', 'super_admin']);
     }
 
     // Check if user is SuperAdmin
     function isSuperAdmin() {
-      return isAuthenticated() && (getUserRole() == 'SUPER_ADMIN');
+      return isAuthenticated() && (getUserRole() in ['SUPER_ADMIN', 'superadmin', 'super_admin']);
     }
 
     // =========================================================
