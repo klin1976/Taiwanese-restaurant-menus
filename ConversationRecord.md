@@ -2,6 +2,19 @@
 
 ---
 
+### [2026-03-22 21:02] AI 回應
+**配置 GitHub CLI 認證輔助 (gh-cli 整合)：**
+
+1.  **認證設定**：
+    *   使用 GitHub CLI (`gh`) 進行身分驗證，避免將明碼 Token 儲存在專案目錄的 `.git/config` 中，提升安全性。
+    *   透過 `gh auth login --with-token` 成功將 Personal Access Token (PAT) 匯入系統。
+2.  **Git 整合**：
+    *   執行 `gh auth setup-git` 將 `gh` 設定為 Git 的認證輔助工具 (Credential Helper)。
+3.  **連線驗證**：
+    *   執行 `git fetch origin master` 驗證，確認無需再輸入帳號密碼即可成功與遠端 GitHub 倉庫進行通訊。
+
+---
+
 ### [2026-03-22 20:42] AI 回應
 **修復權限拒絕與管理員身分判定問題 (Firestore 安全規則與前端常數同步)：**
 
