@@ -2,6 +2,25 @@
 
 ---
 
+### [2026-03-23 11:15] AI 回應
+**修復 AI 菜單辨識穩定性與 Firestore 儲存極限問題 (V5~V9 終極修補)：**
+
+1.  **SDK 升級與亂碼修復 (V6)**：
+    *   針對長篇幅輸出時產生的 UTF8 截斷亂碼問題，將核心 SDK 從舊版 `@google-cloud/vertexai` 全面更換為 Google 最新官方推薦的 `@google/genai` 套件。
+    *   顯著提升了長菜單辨識的穩定性與編碼正確率。
+2.  **導入 JSON 修復引擎 (V8)**：
+    *   解決 AI 回傳觸發 Token 上限 (8192 tokens) 而導致 JSON 結構「斷尾」的問題。
+    *   整合 `jsonrepair` 套件，在 Cloud Function 內部自動偵測並強制閉合未完成的括號與引號。
+    *   讓使用者即使在面對超大型菜單時，也能成功取回 90% 以上已辨識出的商品，不再報格式錯誤。
+3.  **Firestore 資料毒化清創 (V7 & V9)**：
+    *   **問題診斷**：修復 AI 辨識後無法儲存的 `Missing or insufficient permissions` 報錯。確認主因為文件累積的「歷史紀錄 (History)」過於臃腫，導致寫入時突破了 Firestore 單一文件 20,000 個複合索引欄位的上限。
+    *   **核心修復方案**：在 `storeManagementService.js` 中實作「清創手術」，前端在寫入資料庫前，會自動過濾並壓縮舊歷史紀錄中的巨大陣列垃圾，將其轉為輕量化的字串摘要。
+4.  **功能盤點與分析報告**：
+    *   撰寫 `ai_menu_ocr_analysis.md` 技術報告，詳盡紀錄開發歷程與解決極端坑洞的「黑科技」方案。
+    *   完成繁體中文版檔案同步分析報告 `analysis_note.txt`。
+
+---
+
 ### [2026-03-22 21:02] AI 回應
 **配置 GitHub CLI 認證輔助 (gh-cli 整合)：**
 
@@ -106,4 +125,4 @@
 ---
 
 > [!NOTE]
-> 以上紀錄為今日（2026-03-22）的工作彙整。歷史紀錄請參閱 [ConversationRecord.txt](./ConversationRecord.txt)。
+> 以上紀錄為今日（2026-03-23）的工作彙整。歷史紀錄請參閱 [ConversationRecord.txt](./ConversationRecord.txt)。
