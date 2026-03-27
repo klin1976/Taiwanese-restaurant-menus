@@ -1,7 +1,7 @@
 // src/components/MobileOptimizedMenu.js
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { createOrder } from '../services/orderService';
+import { createOrder, checkDuplicateOrder, mergeOrder } from '../services/orderService';
 import { isStoreOpen } from '../utils/initializeStores';
 
 const MobileOptimizedMenu = ({ store, onBack, onOrderComplete }) => {
@@ -202,7 +202,7 @@ const MobileOptimizedMenu = ({ store, onBack, onOrderComplete }) => {
         userEmail: currentUser.email,
         restaurantId: store.id,
         restaurantName: store.name,
-        storeType: store.type, // 用於定位店家庫存文件
+        storeType: store.type,
         items: Object.values(cart).map(item => ({
           id: item.originalId || item.id,
           name: item.name,
@@ -211,21 +211,45 @@ const MobileOptimizedMenu = ({ store, onBack, onOrderComplete }) => {
           customization: item.customization || null
         })),
         totalAmount: getTotalPrice(),
-        status: 'pending'
+        status: '待確認'
       };
 
-      console.log('準備送出的訂單資料:', orderData);
+      // 💡 實作「提示但不阻擋」：檢查是否有重複訂單
+      const existingOrder = await checkDuplicateOrder(currentUser.uid, store.id);
+      
+      let finalOrderId, finalOrderNumber;
 
-      const { id: orderId, orderNumber } = await createOrder(orderData);
+      if (existingOrder) {
+        const confirmMerge = window.confirm(
+          `偵測到您今日已在「${store.name}」下過訂單 (單號: ${existingOrder.orderNumber})。\n\n您想要將目前的商品「合併」至現有訂單中嗎？\n(點擊「取消」將會建立一筆新的獨立訂單)`
+        );
 
-      console.log('訂單建立成功，ID:', orderId, 'No:', orderNumber);
-      alert(`訂單送出成功！ (單號: ${orderNumber})`);
+        if (confirmMerge) {
+          console.log('使用者選擇合併訂單');
+          const result = await mergeOrder(existingOrder.id, orderData);
+          finalOrderId = result.id;
+          finalOrderNumber = result.orderNumber;
+          alert(`訂單已成功合併！ (單號: ${finalOrderNumber})`);
+        } else {
+          console.log('使用者選擇建立新訂單');
+          const result = await createOrder(orderData);
+          finalOrderId = result.id;
+          finalOrderNumber = result.orderNumber;
+          alert(`已建立一筆新訂單！ (單號: ${finalOrderNumber})`);
+        }
+      } else {
+        // 無重複，直接建立
+        const result = await createOrder(orderData);
+        finalOrderId = result.id;
+        finalOrderNumber = result.orderNumber;
+        alert(`訂單送出成功！ (單號: ${finalOrderNumber})`);
+      }
 
       setCart({});
       setShowCart(false);
 
       if (onOrderComplete) {
-        onOrderComplete(orderData);
+        onOrderComplete({ ...orderData, id: finalOrderId, orderNumber: finalOrderNumber });
       }
 
     } catch (error) {
