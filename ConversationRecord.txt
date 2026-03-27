@@ -247,5 +247,5 @@ Google Chat 非常適合店家通知。建議採用混合策略：店家端接 W
 3. **前端 UI 優化**：
    - 在 `MobileOptimizedMenu` 加入互動式詢問視窗，使用者可自由選擇合併或新開訂單。
 4. **部署與同步**：
-   - 完成 Firebase Functions 與 Hosting 的多次迭代部署，確認功能在正式環境 (https://company-lunch-order.web.app) 運造正常。
+   - 完成 Firebase Functions 與 Hosting 的多次迭代部署，確認功能在正式環境 (https://company-lunch-order.web.app) 運作正常。
    - 更新專案任務清單 (task.md) 與功能說明文件 (walkthrough.md)。
