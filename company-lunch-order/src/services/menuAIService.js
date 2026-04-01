@@ -101,6 +101,7 @@ export const analyzeMenuImage = async (imageFile, storeType = 'meals') => {
 export const convertAIResultToMenuFormat = (aiResult, currentStore) => {
     const categories = [];
     const conflicts = [];
+    let globalOptions = [];
     const stats = {
         totalItems: 0,
         newItems: 0,
@@ -121,6 +122,25 @@ export const convertAIResultToMenuFormat = (aiResult, currentStore) => {
         });
     }
 
+    // 處理全域選項 (方案A)
+    if (aiResult.globalOptions && Array.isArray(aiResult.globalOptions)) {
+        globalOptions = aiResult.globalOptions.map(c => ({
+            id: `global_group_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+            name: c.name,
+            type: (c.name.includes('甜度') || c.name.includes('冰度')) ? 'single' : 'multiple',
+            required: (c.name.includes('甜度') || c.name.includes('冰度')),
+            maxSelections: (c.name.includes('甜度') || c.name.includes('冰度')) ? 1 : 10,
+            choices: (c.values || []).map(v => ({
+                id: `global_choice_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+                name: v.name,
+                priceAdjustment: v.price || 0,
+                stock: null,
+                available: true,
+                isDefault: false
+            }))
+        }));
+    }
+
     // 轉換 AI 結果為系統格式
     (aiResult.categories || []).forEach(aiCat => {
         const isNewCategory = !existingCategories.has(aiCat.name);
@@ -131,10 +151,16 @@ export const convertAIResultToMenuFormat = (aiResult, currentStore) => {
             const existingKey = `${aiCat.name}::${aiItem.name}`;
             const existingItem = existingItems.get(existingKey);
 
+            // 自動補價邏輯：若主價格為 0 且有變體，取第一個變體的價格
+            let finalPrice = aiItem.price || 0;
+            if (finalPrice === 0 && aiItem.variants && aiItem.variants.length > 0) {
+                finalPrice = aiItem.variants[0].price || 0;
+            }
+
             const newItem = {
                 id: `ai_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
                 name: aiItem.name,
-                price: aiItem.price || 0,
+                price: finalPrice,
                 description: aiItem.description || '',
                 status: 'available',
                 tags: [],
@@ -144,7 +170,21 @@ export const convertAIResultToMenuFormat = (aiResult, currentStore) => {
                     price: v.price || 0,
                     stock: -1,
                 })),
-                options: [],
+                options: (aiItem.customizations || []).map(c => ({
+                    id: `group_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+                    name: c.name,
+                    type: (c.name.includes('甜度') || c.name.includes('冰度')) ? 'single' : 'multiple',
+                    required: (c.name.includes('甜度') || c.name.includes('冰度')),
+                    maxSelections: (c.name.includes('甜度') || c.name.includes('冰度')) ? 1 : 10,
+                    choices: (c.values || []).map(v => ({
+                        id: `choice_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+                        name: v.name,
+                        priceAdjustment: v.price || 0,
+                        stock: null,
+                        available: true,
+                        isDefault: false
+                    }))
+                })),
                 _isNew: true,
                 _aiGenerated: true,
             };
@@ -175,7 +215,7 @@ export const convertAIResultToMenuFormat = (aiResult, currentStore) => {
         });
     });
 
-    return { categories, conflicts, stats };
+    return { categories, conflicts, stats, globalOptions };
 };
 
 /**

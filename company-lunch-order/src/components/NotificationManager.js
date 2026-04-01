@@ -11,6 +11,23 @@ const NotificationManager = () => {
     const [notifications, setNotifications] = useState([]);
     const initialLoadDone = useRef(false);
 
+    const [permission, setPermission] = useState('Notification' in window ? Notification.permission : 'denied');
+
+    const requestPermission = async () => {
+        if ('Notification' in window) {
+            const result = await Notification.requestPermission();
+            setPermission(result);
+            if (result === 'granted') {
+                addNotification({
+                    id: 'perm-success',
+                    title: '推播已開啟',
+                    message: '您現在可以在背景收到訂單通知了！',
+                    type: 'success'
+                });
+            }
+        }
+    };
+
     useEffect(() => {
         if (!currentUser) return;
 
@@ -43,13 +60,28 @@ const NotificationManager = () => {
                     if (data.status === ORDER_STATUS.CANCELLED) type = 'error';
                     if (data.status === ORDER_STATUS.PREPARING) type = 'warning';
 
+                    const message = `您的訂單 (${data.restaurantName}) 目前狀態已變更為「${statusText}」！`;
+
+                    // 1. 站內通知 UI
                     addNotification({
                         id: Date.now() + Math.random(),
                         title: '訂單狀態更新',
-                        message: `您的訂單 (${data.restaurantName}) 目前狀態已變更為「${statusText}」！`,
+                        message,
                         type,
                         status: data.status
                     });
+
+                    // 2. 瀏覽器系統推播 (若在背景也能收到)
+                    if ('Notification' in window && Notification.permission === 'granted') {
+                        try {
+                            new Notification('🛎️ 訂單狀態更新', {
+                                body: message,
+                                icon: '/favicon.ico' // 可以換成系統 logo
+                            });
+                        } catch (e) {
+                            console.warn('無法發送系統推播:', e);
+                        }
+                    }
                 }
             });
         }, (error) => {
@@ -71,7 +103,7 @@ const NotificationManager = () => {
         setNotifications(prev => prev.filter(n => n.id !== id));
     };
 
-    if (notifications.length === 0) return null;
+    if (notifications.length === 0 && permission !== 'default') return null;
 
     const getTypeStyles = (type) => {
         switch (type) {
@@ -88,6 +120,25 @@ const NotificationManager = () => {
 
     return (
         <div className="fixed bottom-4 right-4 z-[9999] flex flex-col gap-3 max-w-sm w-full pointer-events-none">
+            {/* 權限請求提示 (當權限尚未決定時顯示) */}
+            {permission === 'default' && (
+                <div className="bg-indigo-600 text-white rounded-lg shadow-xl p-4 flex items-center justify-between pointer-events-auto animate-pulse">
+                    <div className="flex items-center">
+                        <Bell className="mr-3" size={24} />
+                        <div>
+                            <p className="font-bold text-sm">想要收到即時通知嗎？</p>
+                            <p className="text-xs opacity-90">開啟瀏覽器推播，不錯過任何訂單更新</p>
+                        </div>
+                    </div>
+                    <button 
+                        onClick={requestPermission}
+                        className="ml-4 bg-white text-indigo-600 px-3 py-1 rounded-md text-sm font-bold hover:bg-indigo-50 transition-colors"
+                    >
+                        立即開啟
+                    </button>
+                </div>
+            )}
+
             {notifications.map(n => {
                 const styles = getTypeStyles(n.type);
                 return (

@@ -3,6 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { getFullStatistics } from '../../services/statisticsService';
 import { exportOrderStatistics } from '../../utils/csvExporter';
+import OrderStatusManager from '../OrderStatusManager';
 import { 
   getPresetDateRange, 
   validateDateRange, 
@@ -24,6 +25,8 @@ const OrderStatistics = ({ onBack }) => {
   const [sortBy, setSortBy] = useState('orderCount'); // 排序欄位
   const [sortOrder, setSortOrder] = useState('desc'); // 排序方向
   const [exporting, setExporting] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [showStatusManager, setShowStatusManager] = useState(false);
 
   // 檢查權限
   useEffect(() => {
@@ -167,6 +170,11 @@ const OrderStatistics = ({ onBack }) => {
     }
   };
 
+  // 處理訂單狀態更新並刷新統計
+  const handleOrderStatusUpdate = (updatedOrder) => {
+    fetchStatistics();
+  };
+
   // 訂單狀態選項
   const statusOptions = [
     { value: '待確認', label: '待確認', color: 'yellow' },
@@ -176,6 +184,19 @@ const OrderStatistics = ({ onBack }) => {
     { value: '已完成', label: '已完成', color: 'gray' },
     { value: '已取消', label: '已取消', color: 'red' }
   ];
+
+  // 獲取狀態顏色樣式
+  const getStatusBadgeStyle = (status) => {
+    const colors = {
+      '待確認': 'bg-yellow-100 text-yellow-800 border-yellow-300',
+      '已確認': 'bg-blue-100 text-blue-800 border-blue-300',
+      '準備中': 'bg-purple-100 text-purple-800 border-purple-300',
+      '可取餐': 'bg-green-100 text-green-800 border-green-300',
+      '已完成': 'bg-gray-100 text-gray-800 border-gray-300',
+      '已取消': 'bg-red-100 text-red-800 border-red-300'
+    };
+    return colors[status] || 'bg-gray-100 text-gray-800 border-gray-300';
+  };
 
   // 載入中狀態
   if (loading) {
@@ -190,7 +211,16 @@ const OrderStatistics = ({ onBack }) => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-orange-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-orange-50 relative">
+      {/* 狀態管理彈窗 */}
+      {showStatusManager && selectedOrder && (
+        <OrderStatusManager
+          order={selectedOrder}
+          onStatusUpdate={handleOrderStatusUpdate}
+          onClose={() => setShowStatusManager(false)}
+        />
+      )}
+
       {/* 標頭 */}
       <div className="bg-white shadow-md sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 py-4">
@@ -614,6 +644,67 @@ const OrderStatistics = ({ onBack }) => {
                     </div>
                   );
                 })}
+              </div>
+            </div>
+
+            {/* 所有訂單明細列表 (管理員視角) */}
+            <div className="mt-6 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+              <div className="p-6 border-b border-gray-200">
+                <h2 className="text-xl font-bold text-gray-900">總覽清單與狀態管理</h2>
+                <p className="text-sm text-gray-500 mt-1">您可在此全域更新各員工的訂單狀態</p>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">下單時間</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">訂購人</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">店家</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">餐點內容</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">金額</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">狀態</th>
+                      <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">操作</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {statistics.orders.map((order) => (
+                      <tr key={order.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-6 py-4 text-sm text-gray-900">
+                          {formatDateTime(order.createdAt)}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm font-medium text-gray-900">{order.userName}</div>
+                          <div className="text-xs text-gray-500">{order.userEmail}</div>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-900">
+                          {order.restaurantName}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate" title={order.items?.map(i => i.name).join(', ')}>
+                          {order.items?.map(i => i.name).join(', ')}
+                        </td>
+                        <td className="px-6 py-4 text-sm font-bold text-gray-900">
+                          ${order.totalAmount}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full border ${getStatusBadgeStyle(order.status)}`}>
+                            {order.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <button
+                            onClick={() => {
+                              setSelectedOrder(order);
+                              setShowStatusManager(true);
+                            }}
+                            className="bg-indigo-600 text-white px-3 py-1.5 rounded text-sm font-medium hover:bg-indigo-700 transition-colors shadow-sm"
+                          >
+                            更新狀態
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           </>

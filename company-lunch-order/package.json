@@ -11,6 +11,7 @@
     "papaparse": "^5.5.3",
     "pinyin": "^4.0.0",
     "react": "^18.2.0",
+    "react-calendar": "^6.0.0",
     "react-dom": "^18.2.0",
     "react-easy-crop": "^5.5.6",
     "react-scripts": "^5.0.1",

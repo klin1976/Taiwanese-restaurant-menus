@@ -1,10 +1,12 @@
 // src/components/admin/StoreManagement/StoreEditor.js
 import React, { useState, useEffect } from 'react';
-import { X, Plus, Trash2, Save, Upload, MapPin, Loader } from 'lucide-react';
+import { X, Plus, Trash2, Save, Upload, MapPin, Loader, Calendar as CalendarIcon } from 'lucide-react';
 import { getDistrictsByCity, taiwanCities } from '../../../config/taiwanDistricts';
 import ImageUploader from './ImageUploader';
 import ImageCropper from './ImageCropper';
 import { uploadStoreImage, deleteImage } from '../../../services/imageUploadService';
+import Calendar from 'react-calendar';
+import 'react-calendar/dist/Calendar.css';
 
 const StoreEditor = ({ isOpen, onClose, store, onSave, isEdit = false }) => {
   // ✅ 預設的營業時間結構
@@ -184,6 +186,69 @@ const StoreEditor = ({ isOpen, onClose, store, onSave, isEdit = false }) => {
         special: prev.hours.special.filter((_, i) => i !== index)
       }
     }));
+  };
+
+  // ============================================
+  // 行事曆輔助邏輯（新增）
+  // ============================================
+
+  const formatCalendarDate = (date) => {
+    if (!date) return '';
+    const d = new Date(date);
+    // 使用本地時間修正 ISO 字串 (確保 YYYY-MM-DD 不會因時區跑掉)
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const handleCalendarClick = (date) => {
+    const dateStr = formatCalendarDate(date);
+    console.log('📅 點擊日曆日期:', dateStr, date);
+    
+    setFormData(prev => {
+      const specialHours = prev.hours.special || [];
+      const existingIndex = specialHours.findIndex(s => s.date === dateStr);
+      
+      let newSpecial;
+      if (existingIndex >= 0) {
+        // 點擊已選取日：移除
+        newSpecial = specialHours.filter((_, i) => i !== existingIndex);
+      } else {
+        // 點擊未選取日：新增店休 (預設)
+        newSpecial = [
+          ...specialHours,
+          {
+            date: dateStr,
+            open: '09:00',
+            close: '21:00',
+            closed: true, // 點擊日曆預設設定為店休
+            reason: '店休'
+          }
+        ].sort((a, b) => a.date.localeCompare(b.date)); // 自動依日期排序
+      }
+
+      return {
+        ...prev,
+        hours: {
+          ...prev.hours,
+          special: newSpecial
+        }
+      };
+    });
+  };
+
+  const tileClassName = ({ date, view }) => {
+    if (view === 'month') {
+      const dateStr = formatCalendarDate(date);
+      const isSpecial = formData.hours.special.find(s => s.date === dateStr);
+      if (isSpecial) {
+        return isSpecial.closed 
+            ? 'bg-red-100 !text-red-700 font-bold border !border-red-300' 
+            : 'bg-yellow-100 !text-yellow-700 font-bold border !border-yellow-300';
+      }
+    }
+    return null;
   };
 
   // ============================================
@@ -494,76 +559,103 @@ const StoreEditor = ({ isOpen, onClose, store, onSave, isEdit = false }) => {
                 <button
                   type="button"
                   onClick={() => setShowSpecialHours(!showSpecialHours)}
-                  className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                  className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center gap-1"
                 >
-                  {showSpecialHours ? '隱藏' : '顯示'}特殊營業時間
+                  <CalendarIcon size={16} />
+                  {showSpecialHours ? '隱藏' : '顯示'}行事曆 (特殊營業時間設定)
                 </button>
 
                 {showSpecialHours && (
-                  <div className="mt-4 space-y-3">
-                    {formData.hours.special.map((special, index) => (
-                      <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                        <input
-                          type="date"
-                          value={special.date}
-                          onChange={(e) => updateSpecialHours(index, 'date', e.target.value)}
-                          className="px-3 py-1 border rounded"
-                        />
+                  <div className="mt-4 flex flex-col md:flex-row gap-6">
+                    {/* 左側：日曆 UI */}
+                    <div className="flex-shrink-0 mx-auto md:mx-0">
+                      <Calendar 
+                        onClickDay={handleCalendarClick}
+                        tileClassName={tileClassName}
+                        className="rounded-lg shadow-sm border-none p-2 bg-gray-50 text-sm font-sans"
+                      />
+                      <p className="text-xs text-gray-500 mt-2 text-center">
+                        💡 貼心提醒：點選日曆可快速加入/移除店休！
+                      </p>
+                    </div>
 
-                        <label className="flex items-center gap-2">
-                          <input
-                            type="checkbox"
-                            checked={special.closed}
-                            onChange={(e) => updateSpecialHours(index, 'closed', e.target.checked)}
-                            className="rounded"
-                          />
-                          <span className="text-sm">休息</span>
-                        </label>
+                    {/* 右側：詳細清單 */}
+                    <div className="flex-1 space-y-3 overflow-y-auto max-h-[350px] pr-2">
+                      {formData.hours.special.length === 0 ? (
+                        <div className="text-gray-400 text-sm flex h-full items-center justify-center border-2 border-dashed rounded-lg p-6">
+                          尚未設定特殊營業時間。點擊左側日曆來快速新增，或點擊下方按鈕手動加入。
+                        </div>
+                      ) : (
+                        formData.hours.special.map((special, index) => (
+                          <div key={index} className={`flex flex-col gap-2 p-4 bg-gray-50 border-l-4 rounded-lg ${special.closed ? 'border-red-400' : 'border-yellow-400'}`}>
+                            <div className="flex items-center justify-between">
+                              <input
+                                type="date"
+                                value={special.date}
+                                onChange={(e) => updateSpecialHours(index, 'date', e.target.value)}
+                                className="px-3 py-1 border rounded w-36 font-semibold bg-white"
+                              />
 
-                        {!special.closed && (
-                          <>
-                            <input
-                              type="time"
-                              value={special.open}
-                              onChange={(e) => updateSpecialHours(index, 'open', e.target.value)}
-                              className="px-3 py-1 border rounded"
-                            />
-                            <span>-</span>
-                            <input
-                              type="time"
-                              value={special.close}
-                              onChange={(e) => updateSpecialHours(index, 'close', e.target.value)}
-                              className="px-3 py-1 border rounded"
-                            />
-                          </>
-                        )}
+                              <button
+                                type="button"
+                                onClick={() => removeSpecialHours(index)}
+                                className="text-red-500 text-sm hover:text-red-700 flex items-center gap-1 bg-red-50 px-2 py-1 rounded"
+                              >
+                                <Trash2 size={14} />
+                                移除
+                              </button>
+                            </div>
 
-                        <input
-                          type="text"
-                          value={special.reason}
-                          onChange={(e) => updateSpecialHours(index, 'reason', e.target.value)}
-                          placeholder="原因（選填）"
-                          className="flex-1 px-3 py-1 border rounded"
-                        />
+                            <div className="flex flex-wrap items-center gap-3">
+                              <label className="flex items-center gap-2 cursor-pointer border p-1 rounded bg-white w-24 justify-center">
+                                <input
+                                  type="checkbox"
+                                  checked={special.closed}
+                                  onChange={(e) => updateSpecialHours(index, 'closed', e.target.checked)}
+                                  className="rounded"
+                                />
+                                <span className="text-sm font-medium">{special.closed ? '店休' : '營業'}</span>
+                              </label>
 
-                        <button
-                          type="button"
-                          onClick={() => removeSpecialHours(index)}
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
-                    ))}
+                              {!special.closed && (
+                                <div className="flex items-center gap-1 bg-white border rounded px-2">
+                                  <input
+                                    type="time"
+                                    value={special.open}
+                                    onChange={(e) => updateSpecialHours(index, 'open', e.target.value)}
+                                    className="p-1 outline-none w-20"
+                                  />
+                                  <span className="text-gray-400">-</span>
+                                  <input
+                                    type="time"
+                                    value={special.close}
+                                    onChange={(e) => updateSpecialHours(index, 'close', e.target.value)}
+                                    className="p-1 outline-none w-20"
+                                  />
+                                </div>
+                              )}
 
-                    <button
-                      type="button"
-                      onClick={addSpecialHours}
-                      className="flex items-center gap-2 text-blue-600 hover:text-blue-700 text-sm"
-                    >
-                      <Plus size={16} />
-                      新增特殊營業時間
-                    </button>
+                              <input
+                                type="text"
+                                value={special.reason}
+                                onChange={(e) => updateSpecialHours(index, 'reason', e.target.value)}
+                                placeholder="備註原因 (例: 補班日/國定假日)"
+                                className="flex-1 min-w-[120px] px-3 py-1 border rounded text-sm bg-white"
+                              />
+                            </div>
+                          </div>
+                        ))
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={addSpecialHours}
+                        className="flex mt-4 mx-auto items-center justify-center gap-2 text-blue-600 border border-blue-600 hover:bg-blue-50 px-4 py-2 rounded-lg text-sm w-full transition-colors font-medium border-dashed"
+                      >
+                        <Plus size={16} />
+                        手動新增特殊日期
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>

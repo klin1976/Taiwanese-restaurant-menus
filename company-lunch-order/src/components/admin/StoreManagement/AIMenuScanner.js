@@ -170,6 +170,34 @@ const AIMenuScanner = ({ store, onClose, onImportComplete }) => {
         });
     };
 
+    // 一鍵套用全域選項
+    const applyGlobalOptionsToAll = () => {
+        if (!convertedData?.globalOptions?.length) return;
+        
+        setConvertedData(prev => {
+            const newCategories = prev.categories.map(cat => ({
+                ...cat,
+                items: cat.items.map(item => ({
+                    ...item,
+                    options: [
+                        ...(item.options || []),
+                        ...prev.globalOptions.map(go => ({
+                            ...go,
+                            id: `group_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`, // 給予全新 ID
+                            choices: go.choices.map(choice => ({ ...choice, id: `choice_${Date.now()}_${Math.random().toString(36).substr(2, 4)}` }))
+                        }))
+                    ]
+                }))
+            }));
+            
+            return {
+                ...prev,
+                categories: newCategories,
+                globalOptionsApplied: true
+            };
+        });
+    };
+
     return (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
@@ -340,6 +368,43 @@ const AIMenuScanner = ({ store, onClose, onImportComplete }) => {
                                 </div>
                             )}
 
+                            {/* 全店通用客製化選項 (方案A) */}
+                            {convertedData.globalOptions?.length > 0 && (
+                                <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <h4 className="font-semibold text-yellow-800 flex items-center gap-2">
+                                            <Sparkles className="w-5 h-5 text-yellow-500" />
+                                            偵測到 {convertedData.globalOptions.length} 項全店通用選項
+                                        </h4>
+                                        <button
+                                            onClick={applyGlobalOptionsToAll}
+                                            disabled={convertedData.globalOptionsApplied}
+                                            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                                                convertedData.globalOptionsApplied
+                                                    ? 'bg-yellow-200 text-yellow-600 cursor-not-allowed'
+                                                    : 'bg-yellow-500 text-white hover:bg-yellow-600 shadow-sm'
+                                            }`}
+                                        >
+                                            {convertedData.globalOptionsApplied ? '✓ 已套用至所有品項' : '一鍵套用至所有品項'}
+                                        </button>
+                                    </div>
+                                    <div className="flex flex-wrap gap-2">
+                                        {convertedData.globalOptions.map((opt, i) => (
+                                            <div key={i} className="bg-white border text-sm border-yellow-100 rounded-lg px-3 py-1.5 shadow-sm">
+                                                <span className="font-bold text-yellow-700">{opt.name}</span>
+                                                <span className="text-gray-400 mx-1">|</span>
+                                                <span className="text-gray-600">{opt.choices.map(c => c.name).join('、')}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    {!convertedData.globalOptionsApplied && (
+                                        <p className="text-xs text-yellow-600 mt-2">
+                                            💡 請點擊上方按鈕，系統將自動這些把選項附加上到下方所有辨識出的飲料中。
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+
                             {/* 衝突項目 */}
                             {convertedData.conflicts.length > 0 && (
                                 <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
@@ -409,6 +474,17 @@ const AIMenuScanner = ({ store, onClose, onImportComplete }) => {
                                                             </div>
                                                             {item.description && (
                                                                 <p className="text-xs text-gray-500 mt-0.5 truncate">{item.description}</p>
+                                                            )}
+                                                            {item.options?.length > 0 && (
+                                                                <div className="flex flex-wrap gap-1 mt-1.5">
+                                                                    {item.options.map((opt, oi) => (
+                                                                        <div key={oi} className="flex items-center bg-amber-50 border border-amber-100 rounded px-1.5 py-0.5" title={opt.choices.map(c => c.name).join(', ')}>
+                                                                            <Sparkles className="w-2.5 h-2.5 text-amber-500 mr-1" />
+                                                                            <span className="text-[10px] font-medium text-amber-700">{opt.name}: </span>
+                                                                            <span className="text-[10px] text-amber-600 ml-1">{opt.choices.length}項</span>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
                                                             )}
                                                             {item.variants?.length > 0 && (
                                                                 <div className="flex gap-2 mt-1 flex-wrap">

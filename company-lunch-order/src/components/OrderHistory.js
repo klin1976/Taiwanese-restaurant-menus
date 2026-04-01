@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { getUserOrders, ORDER_STATUS_TEXT } from '../services/orderService';
+import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
+import { db } from '../firebase';
 
 const OrderHistory = ({ onBack, onOrderSelect }) => {
   const { currentUser } = useAuth();
@@ -10,22 +12,34 @@ const OrderHistory = ({ onBack, onOrderSelect }) => {
   const [filter, setFilter] = useState('all'); // all, pending, completed
 
   useEffect(() => {
-    if (currentUser) {
-      fetchOrders();
-    }
+    if (!currentUser) return;
+
+    setLoading(true);
+    const q = query(
+      collection(db, 'orders'),
+      where('userId', '==', currentUser.uid),
+      orderBy('createdAt', 'desc')
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const userOrders = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate()
+      }));
+      setOrders(userOrders);
+      setLoading(false);
+    }, (error) => {
+      console.error('監聽訂單失敗:', error);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
   }, [currentUser]);
 
-  const fetchOrders = async () => {
-    try {
-      setLoading(true);
-      const userOrders = await getUserOrders(currentUser.uid);
-      setOrders(userOrders);
-    } catch (error) {
-      console.error('獲取訂單失敗:', error);
-      alert('獲取訂單失敗，請重試');
-    } finally {
-      setLoading(false);
-    }
+  const fetchOrders = () => {
+    // 由於有了 onSnapshot，這裡其實不需要手動 fetch，但保留按鈕功能作為保險
+    console.log('手動觸發資料同步檢查');
   };
 
   const getStatusColor = (status) => {
