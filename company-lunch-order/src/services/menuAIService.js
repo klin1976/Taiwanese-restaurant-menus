@@ -70,9 +70,10 @@ export const compressImage = (file, maxSizeMB = 3, maxDimension = 2048) => {
  * 呼叫 Cloud Function 進行菜單辨識
  * @param {File} imageFile - 菜單圖片檔案
  * @param {string} storeType - 店家類型 ('meals' | 'drinks')
+ * @param {string} promptHints - 使用者自定義的提示詞
  * @returns {Promise<Object>} 辨識結果
  */
-export const analyzeMenuImage = async (imageFile, storeType = 'meals') => {
+export const analyzeMenuImage = async (imageFile, storeType = 'meals', promptHints = '') => {
     // 1. 壓縮圖片
     const compressed = await compressImage(imageFile);
     console.log(`📷 圖片壓縮: ${(compressed.originalSize / 1024).toFixed(0)}KB → ${(compressed.compressedSize / 1024).toFixed(0)}KB (${compressed.width}×${compressed.height}, q=${compressed.quality.toFixed(2)})`);
@@ -86,6 +87,7 @@ export const analyzeMenuImage = async (imageFile, storeType = 'meals') => {
         imageBase64: compressed.base64,
         storeType,
         mimeType: compressed.mimeType,
+        promptHints
     });
 
     return result.data;

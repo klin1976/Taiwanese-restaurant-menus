@@ -15,6 +15,8 @@ const AIMenuScanner = ({ store, onClose, onImportComplete }) => {
     const [dragOver, setDragOver] = useState(false);
     const [showImage, setShowImage] = useState(false);
     const [expandedCategories, setExpandedCategories] = useState(new Set());
+    const [promptHints, setPromptHints] = useState('');
+    const [showHints, setShowHints] = useState(false);
     const fileInputRef = useRef(null);
 
     // 處理檔案選擇
@@ -48,7 +50,7 @@ const AIMenuScanner = ({ store, onClose, onImportComplete }) => {
 
         try {
             const storeType = store?.type === 'drinks' ? 'drinks' : 'meals';
-            const result = await analyzeMenuImage(file, storeType);
+            const result = await analyzeMenuImage(file, storeType, promptHints);
 
             if (!result.success) {
                 setError(result.error || '辨識失敗，請重新嘗試');
@@ -134,17 +136,37 @@ const AIMenuScanner = ({ store, onClose, onImportComplete }) => {
         setScanState('importing');
 
         try {
+            // 如果是飲料店且有全域選項但尚未套用，則自動執行套用邏輯 (P0 優化)
+            let finalCategories = convertedData.categories;
+            if (store.type === 'drinks' && convertedData.globalOptions?.length > 0 && !convertedData.globalOptionsApplied) {
+                console.log('🤖 偵測到未套用的全域選項，執行自動合併...');
+                finalCategories = convertedData.categories.map(cat => ({
+                    ...cat,
+                    items: cat.items.map(item => ({
+                        ...item,
+                        options: [
+                            ...(item.options || []),
+                            ...convertedData.globalOptions.map(go => ({
+                                ...go,
+                                id: `auto_group_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+                                choices: go.choices.map(choice => ({ ...choice, id: `auto_choice_${Date.now()}_${Math.random().toString(36).substr(2, 4)}` }))
+                            }))
+                        ]
+                    }))
+                }));
+            }
+
             const merged = mergeAIResultToMenu(
                 store.categories || [],
-                convertedData.categories,
+                finalCategories,
                 convertedData.conflicts
             );
 
             onImportComplete(merged);
             setScanState('success');
 
-            // 2 秒後自動關閉
-            setTimeout(() => onClose(), 2000);
+            // 延長至 4 秒後自動關閉，讓使用者看清楚成功訊息 (P3 優化)
+            setTimeout(() => onClose(), 4000);
         } catch (err) {
             setError('合併菜單時發生錯誤：' + err.message);
             setScanState('error');
@@ -264,6 +286,33 @@ const AIMenuScanner = ({ store, onClose, onImportComplete }) => {
                                         </button>
                                     </div>
                                 </div>
+                            </div>
+
+                            {/* 辨識提示詞輸入框 (P0 優化) */}
+                            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                                <button 
+                                    onClick={() => setShowHints(!showHints)}
+                                    className="w-full flex items-center justify-between px-4 py-2 bg-gray-50 hover:bg-gray-100 transition-colors text-sm text-gray-700 font-medium"
+                                >
+                                    <div className="flex items-center gap-2">
+                                        <Sparkles className="w-4 h-4 text-violet-500" />
+                                        <span>AI 辨識提示詞 (選填)</span>
+                                    </div>
+                                    {showHints ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                                </button>
+                                {showHints && (
+                                    <div className="p-3 bg-white">
+                                        <textarea
+                                            value={promptHints}
+                                            onChange={(e) => setPromptHints(e.target.value)}
+                                            placeholder="例如：這家店有 L 和 XL 兩種規格、紅框區是隱藏選單..."
+                                            className="w-full h-24 p-3 text-sm border rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none resize-none bg-gray-50"
+                                        />
+                                        <p className="text-[10px] text-gray-400 mt-2">
+                                            💡 提示詞可以幫助 AI 更好地理清特殊排版或特定店門規則。
+                                        </p>
+                                    </div>
+                                )}
                             </div>
 
                             {error && (

@@ -4,27 +4,38 @@ const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { GoogleGenAI } = require("@google/genai");
 const { jsonrepair } = require("jsonrepair");
 
-// 速率限制器（簡易版：基於記憶體的計數器）
-const rateLimitMap = new Map();
+// 速率限制器 (持久化於 Firestore)
+const admin = require('firebase-admin');
+if (!admin.apps.length) {
+    admin.initializeApp();
+}
 const RATE_LIMIT_WINDOW = 60 * 1000; // 1 分鐘
 const RATE_LIMIT_MAX = 5; // 每分鐘最多 5 次
 
-function checkRateLimit(uid) {
+async function checkRateLimit(uid) {
+    const db = admin.firestore();
+    const ref = db.collection('rateLimits').doc(uid);
+    const doc = await ref.get();
     const now = Date.now();
-    const userLimit = rateLimitMap.get(uid);
-
-    if (!userLimit || now - userLimit.windowStart > RATE_LIMIT_WINDOW) {
-        rateLimitMap.set(uid, { windowStart: now, count: 1 });
+    if (!doc.exists) {
+        await ref.set({ windowStart: now, count: 1 });
         return true;
     }
-
-    if (userLimit.count >= RATE_LIMIT_MAX) {
+    const data = doc.data();
+    if (now - data.windowStart > RATE_LIMIT_WINDOW) {
+        await ref.set({ windowStart: now, count: 1 });
+        return true;
+    }
+    if (data.count >= RATE_LIMIT_MAX) {
         return false;
     }
-
-    userLimit.count++;
+    await ref.update({ count: admin.firestore.FieldValue.increment(1) });
     return true;
 }
+
+// 速率限制器（簡易版：基於記憶體的計數器）
+
+
 
 // 菜單辨識的 Prompt
 const MENU_RECOGNITION_PROMPT = `你是一位專業的台灣餐飲菜單辨識專家。請仔細分析這張菜單照片，並將所有可辨識的品項整理為結構化的 JSON 格式。
@@ -77,15 +88,14 @@ const DRINKS_PROMPT_SUFFIX = `
 - **主價格同步 (必須)**：
   - **item 的 \`price\` 絕對不能是 0**。若有 \`variants\`，其 \`price\` 應填入第一個變體的價格。
 - **全系列完整性與防止截斷 (極度重要)**：
-  - 這張菜單包含大量系列：**「鮮奶系列」、「鮮榨系列」、「特調系列」、「魔爪系列」、「日本靜岡抹茶系列」、「百香系列」、「冷壓甘蔗系列」**，必須依序全部辨識！
-  - 為了讓 JSON 不被截斷，請大幅精簡 \`description\`，除非像「三兄弟」有特定配料才寫，其餘請保持空字串。
+  - 請仔細辨識菜單上所有系列，必須依序全部辨識！
+  - 為了讓 JSON 不被截斷，請大幅精簡 \`description\`，除非有特定配料才寫，其餘請保持空字串。
   - **不得跳過任何大分類標題下的品項**。
 - **視覺錨點與規格命名**：
-  - 識別頂部「L」與「瓶裝」標題位置。
-  - 產出 \`variants\` 名稱必須為「大杯(L)」與「瓶裝」，絕非小/中/大杯。
+  - 識別並對應不同規格（如 L、XL、瓶裝）的標題位置與價格。
+  - 產出 \`variants\` 名稱應忠於菜單標示。
 - **區域與分類強制處理**：
-  - **區域包含**：必須辨識紅框內的酒精飲料。
-  - **冬瓜獨立**：名稱含「冬瓜」者，請將其從原區移出，獨立建立一個「冬瓜系列」分類。
+  - **冬瓜獨立**：名稱含「冬瓜」者，請將其從原區移出，獨立建立一個「冬瓜系列」分類（若該店本就有此系列則合併）。
 - **標籤映射**：⭐ 轉為 [推薦]，🆕 轉為 [新品]。
 - **應對合併命名**：斜線 \`/\` 分割者務必拆解為獨立商品。`;
 
@@ -118,7 +128,7 @@ exports.analyzeMenuImage = onCall(
         console.log(`User: ${uid}`);
 
         // 2. Rate Limit Check
-        if (!checkRateLimit(uid)) {
+        if (!(await checkRateLimit(uid))) {
             throw new HttpsError(
                 "resource-exhausted",
                 "辨識請求過於頻繁，請稍後再試（每分鐘最多 5 次）"
@@ -126,11 +136,12 @@ exports.analyzeMenuImage = onCall(
         }
 
         // 3. Validate Input
-        const { imageBase64, storeType, mimeType } = request.data || {};
-
+        const { imageBase64, storeType = 'auto', mimeType, promptHints } = request.data || {};
         if (!imageBase64) {
             throw new HttpsError("invalid-argument", "缺少圖片資料");
         }
+        // 若未指定 storeType，根據提示或預設為 meals
+        const finalStoreType = storeType === 'auto' ? 'meals' : storeType;
 
         // 檢查 Base64 大小 (約 4MB 限制)
         const imageSizeBytes = Buffer.from(imageBase64, "base64").length;
@@ -156,12 +167,7 @@ exports.analyzeMenuImage = onCall(
             });
 
             // 組裝 Prompt
-            let prompt = MENU_RECOGNITION_PROMPT;
-            if (storeType === "drinks") {
-                prompt += DRINKS_PROMPT_SUFFIX;
-            } else if (storeType === "meals") {
-                prompt += MEALS_PROMPT_SUFFIX;
-            }
+
 
             console.log("Calling Gemini 2.5 Flash API via Google GenAI SDK...");
             const response = await ai.models.generateContent({
@@ -225,6 +231,11 @@ exports.analyzeMenuImage = onCall(
                     console.log(`Successfully repaired JSON string of length ${cleanText.length}`);
                 } catch (repairError) {
                     console.error("jsonrepair failed:", repairError.message);
+                    // 直接回傳錯誤，避免後續 parse 失敗
+                    return {
+                        success: false,
+                        error: `jsonrepair 失敗: ${repairError.message}`
+                    };
                 }
 
                 parsedResult = JSON.parse(cleanText);
@@ -235,8 +246,7 @@ exports.analyzeMenuImage = onCall(
 
                 return {
                     success: false,
-                    error: "AI 回傳格式異常，無法解析為有效資料。請重新嘗試。",
-                    rawText: textContent.substring(0, 200),
+                    error: `JSON 解析失敗: ${parseError.message}`
                 };
             }
 
@@ -309,8 +319,7 @@ exports.analyzeMenuImage = onCall(
                 data: {
                     globalOptions,
                     categories: parsedResult.categories,
-                    storeType: parsedResult.storeType || storeType || "meals",
-                    confidence: parseFloat(parsedResult.confidence) || 0.5,
+                    storeType: parsedResult.storeType || finalStoreType || "meals",
                     notes: parsedResult.notes || "",
                     totalItems,
                     totalCategories: parsedResult.categories.length,
