@@ -39,10 +39,12 @@ export const compressImage = (file, maxSizeMB = 3, maxDimension = 2048) => {
                 let quality = 0.85;
                 let base64 = canvas.toDataURL('image/jpeg', quality);
 
-                // 如果超過大小限制，逐步降低品質
-                while (base64.length * 0.75 > maxSizeMB * 1024 * 1024 && quality > 0.3) {
+                // 如果超過大小限制，逐步降低品質 (最多嘗試 5 次避免死迴圈)
+                let attempts = 0;
+                while (base64.length * 0.75 > maxSizeMB * 1024 * 1024 && quality > 0.3 && attempts < 5) {
                     quality -= 0.1;
                     base64 = canvas.toDataURL('image/jpeg', quality);
+                    attempts++;
                 }
 
                 // 移除 data:image/jpeg;base64, 前綴
@@ -160,7 +162,7 @@ export const convertAIResultToMenuFormat = (aiResult, currentStore) => {
             }
 
             const newItem = {
-                id: `ai_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+                id: `ai_${Math.random().toString(36).substring(2, 10)}`,
                 name: aiItem.name,
                 price: finalPrice,
                 description: aiItem.description || '',
@@ -274,4 +276,47 @@ export const mergeAIResultToMenu = (existingCategories, aiCategories, conflicts)
     });
 
     return merged;
+};
+
+/**
+ * 合併多張圖片的辨識結果
+ * @param {Array<Object>} results - 多次辨識出的結果陣列
+ * @returns {Object} 合併後的 aiResult (包含 categories, globalOptions)
+ */
+export const mergeMultiImageResults = (results) => {
+    if (!results || results.length === 0) return null;
+    if (results.length === 1) return results[0];
+
+    const mergedCategories = new Map();
+    const mergedGlobalOptions = new Map();
+
+    results.forEach(res => {
+        // 合併分類
+        (res.categories || []).forEach(cat => {
+            if (!mergedCategories.has(cat.name)) {
+                mergedCategories.set(cat.name, { ...cat, items: [...cat.items] });
+            } else {
+                const existingCat = mergedCategories.get(cat.name);
+                // 檢查品項去重
+                cat.items.forEach(newItem => {
+                    const exists = existingCat.items.some(i => i.name === newItem.name);
+                    if (!exists) existingCat.items.push(newItem);
+                });
+            }
+        });
+
+        // 合併全域選項
+        (res.globalOptions || []).forEach(opt => {
+            if (!mergedGlobalOptions.has(opt.name)) {
+                mergedGlobalOptions.set(opt.name, opt);
+            }
+        });
+    });
+
+    return {
+        categories: Array.from(mergedCategories.values()),
+        globalOptions: Array.from(mergedGlobalOptions.values()),
+        storeType: results[0].storeType, // 取第一個結果的店型
+        success: true
+    };
 };
