@@ -2,6 +2,15 @@
 
 ---
 
+### [2026-05-25 09:33] AI 回應
+**專案自訂技能 Native 化部署、路徑修復與 GitHub 分支歸檔推送：**
+
+1. **Bug 診斷與修復**：修復了 `docs/Agents_skill_EN/SKILL.md` 中所有損壞的相對路徑，轉換為具備可點選跳轉功能的 Markdown 連結。
+2. **全域 Native 技能載入 (Native Skills)**：在全域插件配置目錄中建立 `clo-plugin`，並成功部署了包含 11 個自訂點餐技能與 `agents-md` 技能在內的 12 個核心 Skills。
+3. **雙向相容根目錄對齊**：在專案根目錄 `company-lunch-order/` 對齊建立 `skills/` 目錄，使 `AGENTS.md` 與 `api_spec.md` 中引用的 `"skills/..."` 路徑在以專案根目錄為起點運行時，能夠 100% 成功軟性引用與讀取。
+4. **Git 新分支提交與推送**：在 `.gitignore` 排除了重複檔案，成功在 GitHub 建立新分支 `feature/skills-alignment-fix` 並將全部變更推送，提供一鍵 PR 連結並詳細解說 Git/PR 的底層工作原理。
+
+---
 
 ### [2026-04-21 14:55] AI 回應
 **角色權限與模組分工優化分析：**
