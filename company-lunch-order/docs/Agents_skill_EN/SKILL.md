@@ -83,7 +83,7 @@ Each custom agent must still receive a full `agent_schema` block.
 
 ## Step 3 — Write the Document
 
-Build the AGENTS.md in this order. Read `references/schema-spec.md` for the full
+Build the AGENTS.md in this order. Read [schema-spec.md](./schema-spec.md) for the full
 YAML field reference before writing any `agent_schema` block.
 
 ### 3-A  Document Header
@@ -125,7 +125,7 @@ routing_priority:
 ### 3-E  Each Sub-agent Section
 For each agent, write in this order:
 1. Section header with role name
-2. `agent_schema` YAML block (see `references/schema-spec.md`)
+2. `agent_schema` YAML block (see [schema-spec.md](./schema-spec.md))
 3. Human-readable prose: responsibilities, known APIs/tables/forms, gotchas
 4. Input format template (what orchestrator sends)
 5. Output format template (what agent returns)
@@ -200,7 +200,7 @@ If the user uploads an existing AGENTS.md, run a gap analysis first:
    add structured `agent_schema` blocks without removing human-readable prose
 5. **Changelog entry** — document what v→v upgrade added
 
-> See `references/examples/upgrade-gap-analysis.md` for a worked example
+> See [upgrade-gap-analysis.md](./upgrade-gap-analysis.md) for a worked example
 > of the gap analysis → rewrite workflow.
 
 ---
@@ -211,8 +211,8 @@ Read these when you need detailed specs — do not load all at once:
 
 | File | When to read |
 |------|-------------|
-| `references/schema-spec.md` | Before writing any `agent_schema` YAML block |
-| `references/routing-logic.md` | When writing the Orchestrator routing algorithm section |
-| `references/examples/fullstack.md` | When the project has 4+ agents across multiple layers |
-| `references/examples/single-layer.md` | When the project needs only 1–2 implementation agents |
-| `references/examples/upgrade-gap-analysis.md` | When upgrading an existing AGENTS.md |
+| [schema-spec.md](./schema-spec.md) | Before writing any `agent_schema` YAML block |
+| [routing-logic.md](./routing-logic.md) | When writing the Orchestrator routing algorithm section |
+| [fullstack.md](./fullstack.md) | When the project has 4+ agents across multiple layers |
+| [single-layer.md](./single-layer.md) | When the project needs only 1–2 implementation agents |
+| [upgrade-gap-analysis.md](./upgrade-gap-analysis.md) | When upgrading an existing AGENTS.md |
