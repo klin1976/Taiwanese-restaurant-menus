@@ -100,7 +100,10 @@ service cloud.firestore {
     // 6. Counters (For Order Numbering)
     // - Read/Write: Authenticated users need to increment counters during order creation
     match /counters/{counterId} {
-      allow read, write: if isAuthenticated();
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated()
+                   && request.resource.data.date == resource.data.date
+                   && request.resource.data.count == resource.data.count + 1;
     }
 
     // 7. System (For initialization flags)

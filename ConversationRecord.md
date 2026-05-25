@@ -2,6 +2,15 @@
 
 ---
 
+### [2026-05-25 13:16] 用戶提問 / AI 回應
+**關閉專案與自動備份：**
+
+1. **更新對話紀錄**：將本回合關閉專案的對話紀錄附加至 `ConversationRecord.txt` 與 `ConversationRecord.md`。
+2. **偵測未提交變更**：偵測到本機 `company-lunch-order/` 下有多個檔案異動（如 `firestore.rules`, `MenuEditor.js`, `orderService.js` 等）及未追蹤報告 `project_analysis_report.md`。
+3. **準備推送 GitHub**：詢問用戶是否要一併將這些異動與對話紀錄推送至 GitHub。
+
+---
+
 ### [2026-05-25 09:33] AI 回應
 **專案自訂技能 Native 化部署、路徑修復與 GitHub 分支歸檔推送：**
 

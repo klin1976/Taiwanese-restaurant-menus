@@ -119,21 +119,10 @@ export const createOrder = async (orderData) => {
         transaction.update(storeRef, { categories: newCategories, updatedAt: Timestamp.now() });
       }
 
-      // 處理序號
+      // 處理序號 (改採無鎖短 ID 方案，消除 counters/dailyOrderCounter 單點併發瓶頸)
       const todayStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-      const counterRef = doc(db, 'counters', 'dailyOrderCounter');
-      const counterDoc = await transaction.get(counterRef);
-
-      let currentSeq = 1;
-      if (counterDoc.exists()) {
-        const data = counterDoc.data();
-        if (data.date === todayStr) {
-          currentSeq = data.count + 1;
-        }
-      }
-      transaction.set(counterRef, { date: todayStr, count: currentSeq });
-
-      const orderNumber = `${todayStr}-${String(currentSeq).padStart(4, '0')}`;
+      const randomStr = Math.random().toString(36).substring(2, 6).toUpperCase();
+      const orderNumber = `${todayStr}-${randomStr}`;
       newOrder.orderNumber = orderNumber;
 
       const newOrderRef = doc(collection(db, 'orders'));

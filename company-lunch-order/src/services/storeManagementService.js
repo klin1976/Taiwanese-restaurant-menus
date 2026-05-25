@@ -36,8 +36,14 @@ export const getAllStores = async (type = 'all') => {
     for (const storeType of types) {
       const storesRef = collection(db, 'stores', storeType, 'list');
 
-      // ✅ 直接查詢所有文件，不使用 orderBy（避免索引問題）
-      const snapshot = await getDocs(storesRef);
+      // 🔍 伺服器端過濾已刪除，並依據 sortOrder 升遞排序
+      const q = query(
+        storesRef,
+        where('deleted', '==', false),
+        orderBy('sortOrder', 'asc')
+      );
+
+      const snapshot = await getDocs(q);
 
       console.log(`📦 ${storeType} 查詢結果:`, snapshot.size, '筆文件');
 
@@ -45,21 +51,18 @@ export const getAllStores = async (type = 'all') => {
         const data = doc.data();
         console.log(`📄 文件 ${doc.id}:`, data);
 
-        // 前端過濾：只顯示未刪除的店家
-        if (data.deleted !== true) {
-          stores.push({
-            id: doc.id,
-            ...data,
-            type: storeType
-          });
-        } else {
-          console.log(`⏭️ 跳過已刪除的店家: ${doc.id}`);
-        }
+        stores.push({
+          id: doc.id,
+          ...data,
+          type: storeType
+        });
       });
     }
 
-    // ✅ 前端排序
-    stores.sort((a, b) => (a.sortOrder || 999) - (b.sortOrder || 999));
+    // 若為 'all'，因為合併了不同的 storeType，需再針對合併結果進行一次排序
+    if (type === 'all') {
+      stores.sort((a, b) => (a.sortOrder || 999) - (b.sortOrder || 999));
+    }
 
     console.log(`✅ 成功載入 ${stores.length} 家店家`);
     return stores;
@@ -375,8 +378,14 @@ export const subscribeToStores = (type, callback) => {
     types.forEach(storeType => {
       const storesRef = collection(db, 'stores', storeType, 'list');
 
-      // ✅ 直接監聽整個 collection，不使用 orderBy
-      const unsubscribe = onSnapshot(storesRef, (snapshot) => {
+      // 🔍 伺服器端過濾已刪除，並依據 sortOrder 升遞排序
+      const q = query(
+        storesRef,
+        where('deleted', '==', false),
+        orderBy('sortOrder', 'asc')
+      );
+
+      const unsubscribe = onSnapshot(q, (snapshot) => {
         console.log(`📦 收到 ${storeType} 店家更新:`, snapshot.size, '筆');
 
         // 移除舊的該類型資料
@@ -387,18 +396,17 @@ export const subscribeToStores = (type, callback) => {
           const data = doc.data();
           console.log(`📄 ${storeType} 文件 ${doc.id}:`, data.name, 'deleted:', data.deleted);
 
-          // 前端過濾：只顯示未刪除的店家
-          if (data.deleted !== true) {
-            allStores.push({
-              id: doc.id,
-              ...data,
-              type: storeType
-            });
-          }
+          allStores.push({
+            id: doc.id,
+            ...data,
+            type: storeType
+          });
         });
 
-        // ✅ 前端排序
-        allStores.sort((a, b) => (a.sortOrder || 999) - (b.sortOrder || 999));
+        // 若為 'all'，因為合併了不同的 storeType，需再針對合併結果進行一次排序
+        if (type === 'all') {
+          allStores.sort((a, b) => (a.sortOrder || 999) - (b.sortOrder || 999));
+        }
 
         console.log(`✅ 店家列表更新完成，共 ${allStores.length} 家`);
 

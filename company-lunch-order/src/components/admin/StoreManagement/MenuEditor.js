@@ -43,6 +43,22 @@ const MenuEditor = ({ store, onClose, onSave }) => {
   // JSON 匯入 Ref
   const jsonInputRef = useRef(null);
 
+  // 🛡️ 計算當前菜單估計容量大小（以位元組為單位）
+  const getMenuSize = () => {
+    try {
+      const str = JSON.stringify(categories);
+      return str ? str.length : 0;
+    } catch (e) {
+      return 0;
+    }
+  };
+
+  const menuSize = getMenuSize();
+  const menuSizeKB = (menuSize / 1024).toFixed(2);
+  const sizePercentage = Math.min((menuSize / (1024 * 1024)) * 100, 100).toFixed(2);
+  const isWarning = menuSize > 500 * 1024; // > 500KB 警告
+  const isDanger = menuSize > 800 * 1024;  // > 800KB 危險
+
   // 初始化菜單資料
   useEffect(() => {
     if (store && store.categories) {
@@ -732,16 +748,56 @@ const MenuEditor = ({ store, onClose, onSave }) => {
         {/* 標題列 */}
         <div className="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center z-10">
           <div>
-            <h2 className="text-2xl font-bold flex items-center gap-2">
+            <h2 className="text-2xl font-bold flex items-center gap-2 text-gray-900">
               <Package size={24} className="text-blue-600" />
               {store.name} - 菜單管理
             </h2>
-            {hasChanges && (
-              <p className="text-sm text-orange-600 mt-1 flex items-center gap-1">
-                <AlertCircle size={16} />
-                有未儲存的變更
-              </p>
-            )}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5">
+              {hasChanges && (
+                <p className="text-sm text-orange-600 flex items-center gap-1">
+                  <AlertCircle size={16} />
+                  有未儲存的變更
+                </p>
+              )}
+              {/* 🛡️ Firestore 1MB 備份安全容量計 */}
+              <div className="flex items-center gap-2 bg-blue-50/70 hover:bg-blue-50 border border-blue-100 rounded-lg px-2.5 py-1 text-xs text-blue-800 transition-colors group relative cursor-help">
+                <span className="flex h-2 w-2 relative">
+                  <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                    isDanger ? 'bg-red-400' : isWarning ? 'bg-orange-400' : 'bg-green-400'
+                  }`}></span>
+                  <span className={`relative inline-flex rounded-full h-2 w-2 ${
+                    isDanger ? 'bg-red-500' : isWarning ? 'bg-orange-500' : 'bg-green-500'
+                  }`}></span>
+                </span>
+                <span className="font-semibold flex items-center gap-1">
+                  🛡️ 1MB 備份防禦：
+                  <span className={isDanger ? 'text-red-600' : isWarning ? 'text-orange-600' : 'text-green-700'}>
+                    {menuSizeKB} KB
+                  </span>
+                  / 1,024 KB ({sizePercentage}%)
+                </span>
+                
+                {/* 優雅極致 HSL 漸層 Glassmorphism Tooltip */}
+                <div className="absolute top-full left-0 mt-2 w-80 bg-gray-900/95 backdrop-blur-md text-white text-xs rounded-xl p-3.5 shadow-2xl opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 pointer-events-none transition-all duration-300 z-50 leading-relaxed border border-gray-800/80">
+                  <div className="font-bold text-blue-400 mb-1.5 flex items-center gap-1 text-sm border-b border-gray-800 pb-1">
+                    🛡️ Firestore 1MB 安全限額防禦
+                  </div>
+                  <p className="text-gray-300 mb-2">
+                    Firestore 單文件儲存上限為 <span className="text-white font-bold">1MB</span>。為防禦歷史菜單備份膨脹毒化：
+                  </p>
+                  <ul className="space-y-1.5 text-gray-300">
+                    <li className="flex items-start gap-1">
+                      <span className="text-blue-400 mt-0.5">•</span>
+                      <span><strong className="text-white">自動清創防爆：</strong>歷史變更中的巨型菜單對象已字串化，且嚴格限制 20 筆。</span>
+                    </li>
+                    <li className="flex items-start gap-1">
+                      <span className="text-blue-400 mt-0.5">•</span>
+                      <span><strong className="text-white">當前空間佔用：</strong>{menuSizeKB} KB / 1,024 KB (<strong className={isDanger ? 'text-red-400' : isWarning ? 'text-orange-400' : 'text-green-400'}>{sizePercentage}%</strong>)。</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="flex gap-2">

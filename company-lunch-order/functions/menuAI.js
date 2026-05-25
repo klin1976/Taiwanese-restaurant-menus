@@ -9,7 +9,7 @@ const admin = require('firebase-admin');
 // admin.initializeApp() 已在 index.js 執行
 
 const RATE_LIMIT_WINDOW = 60 * 1000; // 1 分鐘
-const RATE_LIMIT_MAX = 5; // 每分鐘最多 5 次
+const RATE_LIMIT_MAX = 1; // 每分鐘最多 1 次
 
 async function checkRateLimit(uid) {
     const db = admin.firestore();
