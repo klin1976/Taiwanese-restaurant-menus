@@ -14,13 +14,13 @@
 
 | Skill 文件 | 適用情境 / 功能模組 | 引用方式 | 核心看點 |
 |-----------|-------------------|---------|---------|
-| [`clo-auth-role/SKILL.md`](./skills/clo-auth-role/SKILL.md) | 權限認證、登入降級與 RBAC | **強制引用** | 開發者調試模式 Google Auth 降級登入與角色分配 |
-| [`clo-store-management/SKILL.md`](./skills/clo-store-management/SKILL.md) | 店家菜單嵌入、拼音生成與備份清創 | **強制引用** | 拼音 ID 自動生成與 Firestore 1MB 上限崩潰防禦 |
-| [`clo-order-system/SKILL.md`](./skills/clo-order-system/SKILL.md) | 原子性交易下單、每日限量與訂單合併 | **強制引用** | 扣減限量份數之 `runTransaction` 與 `mergeOrder` 邏輯 |
-| [`clo-menu-ai/SKILL.md`](./skills/clo-menu-ai/SKILL.md) | Gemini 多模態菜單識別、限流與修補 | **強制引用** | Vertex AI 限流防刷、`jsonrepair` 文字層級結構修補 |
-| [`clo-statistics-reporting/SKILL.md`](./skills/clo-statistics-reporting/SKILL.md) | 營業報表統計、數據聚合與 CSV 匯出 | **強制引用** | 前端高度效能數據聚合與 Windows Excel 中文 BOM 亂碼修復 |
-| [`clo-notification-system/SKILL.md`](./skills/clo-notification-system/SKILL.md) | 實時監聽、雙軌通知與 Teams Webhook | **強制引用** | `onSnapshot` 監聽、雙軌通知與 Teams Webhook 推送規格 |
-| [`clo-db-migration/SKILL.md`](./skills/clo-db-migration/SKILL.md) | Firestore 安全規則防禦與資料遷移 | **強制引用** | 訂單防篡改安全規則與測試資料遷移腳本 |
+| [`clo-auth-role/SKILL.md`](../skills/clo-auth-role/SKILL.md) | 權限認證、登入降級與 RBAC | **強制引用** | 開發者調試模式 Google Auth 降級登入與角色分配 |
+| [`clo-store-management/SKILL.md`](../skills/clo-store-management/SKILL.md) | 店家菜單嵌入、拼音生成與備份清創 | **強制引用** | 拼音 ID 自動生成與 Firestore 1MB 上限崩潰防禦 |
+| [`clo-order-system/SKILL.md`](../skills/clo-order-system/SKILL.md) | 原子性交易下單、每日限量與訂單合併 | **強制引用** | 扣減限量份數之 `runTransaction` 與 `mergeOrder` 邏輯 |
+| [`clo-menu-ai/SKILL.md`](../skills/clo-menu-ai/SKILL.md) | Gemini 多模態菜單識別、限流與修補 | **強制引用** | Vertex AI 限流防刷、`jsonrepair` 文字層級結構修補 |
+| [`clo-statistics-reporting/SKILL.md`](../skills/clo-statistics-reporting/SKILL.md) | 營業報表統計、數據聚合與 CSV 匯出 | **強制引用** | 前端高度效能數據聚合與 Windows Excel 中文 BOM 亂碼修復 |
+| [`clo-notification-system/SKILL.md`](../skills/clo-notification-system/SKILL.md) | 實時監聽、雙軌通知與 Teams Webhook | **強制引用** | `onSnapshot` 監聽、雙軌通知與 Teams Webhook 推送規格 |
+| [`clo-db-migration/SKILL.md`](../skills/clo-db-migration/SKILL.md) | Firestore 安全規則防禦與資料遷移 | **強制引用** | 訂單防篡改安全規則與測試資料遷移腳本 |
 
 ---
 

@@ -83,33 +83,7 @@ const AIMenuScanner = ({ store, onClose, onImportComplete }) => {
             const converted = convertAIResultToMenuFormat(finalAiResult, store);
             setConvertedData(converted);
 
-            // 預設展開所有分類
-            const allCatNames = new Set(converted.categories.map(c => c.name));
-            setExpandedCategories(allCatNames);
 
-            setScanState('preview');
-        } catch (err) {
-            clearInterval(timerRef.current);
-            console.error('AI 辨識錯誤:', err);
-            // ... (同舊錯誤處理)
-            setScanState('error');
-            setError(err.message || '辨識失敗');
-        }
-    };
-
-    // 重新辨識
-    const handleRetry = () => {
-        if (imageFile) {
-            startRecognition(imageFile);
-        } else {
-            setScanState('idle');
-            setImagePreview(null);
-            setAiResult(null);
-            setConvertedData(null);
-        }
-    };
-
-    // 切換衝突項目的行為
     const toggleConflictAction = (index) => {
         setConvertedData(prev => {
             const newConflicts = [...prev.conflicts];
@@ -371,23 +345,7 @@ const AIMenuScanner = ({ store, onClose, onImportComplete }) => {
                                 )}
                             </div>
 
-                            {error && (
-                                <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
-                                    <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-                                    <div>
-                                        <p className="text-red-700 font-medium">辨識失敗</p>
-                                        <p className="text-red-600 text-sm mt-1">{error}</p>
-                                        {imageFile && (
-                                            <button
-                                                onClick={handleRetry}
-                                                className="mt-2 text-sm text-red-600 hover:text-red-800 flex items-center gap-1 font-medium"
-                                            >
-                                                <RefreshCw className="w-3.5 h-3.5" /> 重新辨識
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
+
 
                             <input
                                 ref={fileInputRef}
@@ -451,20 +409,7 @@ const AIMenuScanner = ({ store, onClose, onImportComplete }) => {
                                 </div>
                             )}
 
-                            {/* 圖片預覽按鈕 */}
-                            {imagePreview && (
-                                <button
-                                    onClick={() => setShowImage(!showImage)}
-                                    className="text-sm text-violet-600 hover:text-violet-800 flex items-center gap-1 font-medium"
-                                >
-                                    <Eye className="w-4 h-4" /> {showImage ? '隱藏原始圖片' : '查看原始圖片'}
-                                </button>
-                            )}
-                            {showImage && imagePreview && (
-                                <div className="rounded-xl overflow-hidden border shadow-sm">
-                                    <img src={imagePreview} alt="原始菜單" className="w-full" />
-                                </div>
-                            )}
+
 
                             {/* 全店通用客製化選項 (方案A) */}
                             {convertedData.globalOptions?.length > 0 && (
@@ -666,12 +611,7 @@ const AIMenuScanner = ({ store, onClose, onImportComplete }) => {
                 {scanState === 'preview' && (
                     <div className="border-t px-6 py-4 bg-gray-50 flex items-center justify-between">
                         <div className="flex gap-2">
-                            <button
-                                onClick={handleRetry}
-                                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors flex items-center gap-2 text-sm"
-                            >
-                                <RefreshCw className="w-4 h-4" /> 重新辨識
-                            </button>
+
                             <button
                                 onClick={onClose}
                                 className="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors text-sm"

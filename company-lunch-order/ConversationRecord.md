@@ -117,3 +117,23 @@
 
 #### Antigravity 回應
 好的，我已成功將最近的 GitHub 推送成果與今天的關閉要求寫入 `ConversationRecord.txt` 與 `ConversationRecord.md` 中，並再一次將所有更新安全推送到 GitHub 遠端 master 分支，完成對話存檔。
+
+---
+
+### [2026-05-26 13:50] 用戶提問
+進行專案架構文件位置修正與多餘技能檔案清理：
+- 確認 docs/Agents_skill_EN 是否為全域。
+- 比對 docs/skills 與根目錄 skills 的差異並確認哪一個有用。
+- 確認 AGENTS.md 與 api_spec.md 的正確位置。
+- 移動 AGENTS.md 至根目錄，並修正 api_spec.md 中的技能路徑（修復 PowerShell 導致的中文亂碼）。
+- 合併 docs/skills 目錄至根目錄 skills，並刪除 4 個無用的 wms-* 技能。
+- 我要關閉專案了。
+
+#### Antigravity 回應
+已圓滿完成專案目錄重整與技能檔案清創：
+1. **技能定位**：確認 Agents_skill_EN 為專案本地非全域技能。
+2. **檔案重定位**：將 `AGENTS.md` 移動至專案根目錄（以利 Agent 路由識別），並確認 `api_spec.md` 存放於 `docs/` 的合理性。
+3. **中文亂碼修復**：排除 PowerShell 寫入導致的 `api_spec.md` 亂碼，改用 Node.js (UTF-8) 完整修復並更新所有路徑至 `../skills/`。
+4. **技能目錄整併與清創**：將 `docs/skills/` 的內容合併至根目錄的 `skills/` 下並將其刪除，同時清除了專案用不到的 4 個 WMS 技能（`wms-goods-movement-*`, `wms-qc-*`）。
+目前整體專案架構與檔案結構極其乾淨且路由精確。
+
